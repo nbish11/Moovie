@@ -39,12 +39,16 @@ var Moovie = function (videos, options) {
     var Doit = function (video, options) {
 
         video.controls = false;
+        
+        var basename = function (path) {
+            return path.replace(/\\/g, '/').replace(/.*\//, '');
+        };
 
         // Options
         var defaults = {
             debug: false,
             autohideControls: true,
-            title: new URI(video.src).get('file'),
+            title: basename(video.src),
             playlist: [],
             captions: null,
             showCaptions: true,
