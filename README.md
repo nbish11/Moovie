@@ -2,6 +2,12 @@ Moovie
 ======
 This is a custom controls library for the HTML5 video element.
 
+Introduction
+------------
+Colin has done such an unbelievably amazing job on Moovie, that instead of forking it, I decided to get permission to take over the project, I emailed Colin last year and was able to get full permission to do so. By not forking it, it means Colin still holds the copyright (and he deserves to).
+
+I've been busy myself and have not found the time in the past year to upload it or make any changes to the source. Due to bad email archiving I have lost the updated script that Colin had sent me and have decided to start again from scratch now that I have the time.
+
 Requirements
 ------------
 * MooTools Core 1.2.4
