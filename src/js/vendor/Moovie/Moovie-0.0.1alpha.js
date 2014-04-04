@@ -433,16 +433,16 @@ var Moovie = function (videos, options) {
         };
 
         // Title -------------------------------------------------------------------
-        title.show = function () {
+        title.showTitle = function () {
             var index = options.playlist.key();
-            var text = options.playlist.current().title;
-            title.set('html', (index).toString() + '. ' + text);
+            var text = options.playlist.getActive().title;
+            title.set('html', index.toString() + '. ' + text);
             title.fade('in');
             var timer = setTimeout(function () {
                 title.fade('out');
                 timer = null;
             }, 6000);
-        }
+        };
 
         // Panels ------------------------------------------------------------------
         panels.update = function (which) {
@@ -469,7 +469,7 @@ var Moovie = function (videos, options) {
                     break;
                     
                 default:
-                    item = options.playlist.current(action);
+                    item = options.playlist.setCurrent(action);
             }
             
             if (item) {
@@ -482,20 +482,11 @@ var Moovie = function (videos, options) {
 
                 options.captions = Moovie.captions[item.id];
 
-                title.show();
+                title.showTitle();
 
                 panels.info.getElement('dt.title + dd').set('html', (item.title || basename(item.src)));
                 panels.info.getElement('dt.url + dd').set('html', item.src);
             }
-        }
-
-        panels.playlist.getActive = function () {
-            var current = panels.playlist.getElement('ol.playlist li.active');
-            var index = +current.get('data-index');
-            return {
-                'element': current,
-                'index': index
-            };
         }
 
         // Controls ----------------------------------------------------------------
@@ -581,7 +572,7 @@ var Moovie = function (videos, options) {
         // Overlay -----------------------------------------------------------------
         $$(overlay.play, overlay.replay).addEvent('click', function (e) {
             video.play();
-            title.setStyle('display', 'block');
+            title.showTitle();
         });
 
         $$(overlay.paused).addEvent('click', function (e) {
@@ -746,7 +737,7 @@ var Moovie = function (videos, options) {
 
             ended: function (e) {
                 if (options.playlist.length > 1) {
-                    panels.playlist.play('next');
+                    options.playlist.play('next');
                 } else {
                     controls.play.update();
                     overlay.update('replay');
@@ -1125,19 +1116,21 @@ Moovie.Modules = {
         },
         
         first: function () {
-            return this.current(0);
+            return this.setCurrent(0);
         },
         
         previous: function () {
-            return this.current(this.index - 1);
+            return this.setCurrent(this.index - 1);
         },
         
         hasPrevious: function () {
             return this.index > 0;
         },
         
-        current: function (key) {
-            if ((typeOf(key) === 'number' && this.valid(key)) || !key) {
+        setCurrent: function (key) {
+            key = key.toInt();
+            
+            if (this.valid(key)) {
                 this.index = key;
                 return this.items[this.key()];
             }
@@ -1145,16 +1138,20 @@ Moovie.Modules = {
             return false;
         },
         
+        getActive: function () {
+            return this.items[this.key()];
+        },
+        
         hasNext: function () {
             return this.index < (this.length() - 1);
         },
         
         next: function () {
-            return this.current(this.index + 1);
+            return this.setCurrent(this.index + 1);
         },
         
         last: function () {
-            return this.current(this.length() - 1);
+            return this.setCurrent(this.length() - 1);
         },
         
         each: function (callback) {
