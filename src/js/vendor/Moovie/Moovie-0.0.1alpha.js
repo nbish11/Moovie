@@ -65,6 +65,11 @@ var Moovie = function (videos, options) {
             src: video.src,
             title: options.title
         });
+        
+        // Encode/decode as JSON string, now wrap in an iterator for
+        // playlist management.
+        options.playlist = JSON.parse(JSON.stringify(options.playlist))
+        options.playlist = new Moovie.Modules.Iterator(options.playlist);
 
         // Grab some refs
         var wrapper = video.getParent();
@@ -150,216 +155,11 @@ var Moovie = function (videos, options) {
             return volume;
         };
 
-
         // Dubug mode ==============================================================
         if (options.debug) {
-
-            // Build interface -------------------------------------------------------
-            var debug = new Element('div', {
-                'class': 'debug'
-            });
-            debug.table = new Element('table');
-            debug.table.body = new Element('tbody');
-            debug.msg = new Element('p', {
-                text: 'Moovie instance ready.'
-            });
-
-            ['autobuffer', 'autoplay', 'controls', 'loop', 'networkState', 'readyState', 'error' /*, 'buffered'*/ ,
-                'defaultPlaybackRate', 'playbackRate', 'duration', 'currentTime', 'startTime' /*, 'played', 'seekable'*/ ,
-                'seeking', 'paused', 'ended', 'volume', 'muted'
-            ].each(function (el) {
-                var row = new Element('tr');
-                var label = new Element('td', {
-                    text: el
-                });
-                debug[el] = new Element('td', {
-                    text: video[el]
-                });
-
-                row.adopt(label, debug[el]);
-                debug.table.body.grab(row);
-            });
-
-            debug.table.grab(debug.table.body);
-            debug.adopt(debug.table, debug.msg);
+            var debug = $(new Moovie.Modules.Debug(video));
             debug.inject(container);
-
-            // Events ----------------------------------------------------------------
-            video.addEvents({
-
-                // networkState
-                loadstart: function (e) {
-                    debug.networkState.set('text', video.networkState);
-                    debug.networkState.getParent().highlight();
-
-                    debug.msg.set('html', 'Now looking for data...');
-                    debug.msg.highlight();
-                },
-
-                progress: function (e) {
-                    debug.networkState.set('text', video.networkState);
-                    debug.networkState.getParent().highlight();
-
-                    debug.msg.set('html', 'Now fetching data...');
-                    debug.msg.highlight();
-                },
-
-                suspend: function (e) {
-                    debug.networkState.set('text', video.networkState);
-                    debug.networkState.getParent().highlight();
-
-                    debug.msg.set('html', 'Data fetching <b>suspended</b>.');
-                    debug.msg.highlight();
-                },
-
-                abort: function (e) {
-                    debug.networkState.set('text', video.networkState);
-                    debug.networkState.getParent().highlight();
-
-                    debug.msg.set('html', 'Data fetching <b>aborted</b>.');
-                    debug.msg.highlight();
-                },
-
-                error: function (e) {
-                    debug.networkState.set('text', video.networkState);
-                    debug.networkState.getParent().highlight();
-
-                    debug.error.set('text', video.error.code);
-                    debug.error.highlight();
-
-                    debug.msg.set('html',
-                        'An error occurred while fetching data. See <b>error</b> attribute.');
-                    debug.msg.highlight();
-                },
-
-                emptied: function (e) {
-                    debug.networkState.set('text', video.networkState);
-                    debug.networkState.getParent().highlight();
-
-                    debug.msg.set('html',
-                        'Media resource <b>emptied</b>. Possible error; see <b>error attribute.');
-                    debug.msg.highlight();
-                },
-
-                stalled: function (e) {
-                    debug.networkState.set('text', video.networkState);
-                    debug.networkState.getParent().highlight();
-
-                    debug.msg.set('html', 'Data throughput is <b>stalled</b>, possibly temporarily.');
-                    debug.msg.highlight();
-                },
-
-                // readyState
-                loadedmetadata: function (e) {
-                    debug.readyState.set('text', video.readyState);
-                    debug.readyState.getParent().highlight();
-
-                    debug.msg.set('html', 'Duration and dimensions of media resource determined.');
-                    debug.msg.highlight();
-                },
-
-                loadeddata: function (e) {
-                    debug.readyState.set('text', video.readyState);
-                    debug.readyState.getParent().highlight();
-
-                    debug.msg.set('html', 'Some data available, but more is needed.');
-                    debug.msg.highlight();
-                },
-
-                waiting: function (e) {
-                    debug.readyState.set('text', video.readyState);
-                    debug.readyState.getParent().highlight();
-
-                    debug.msg.set('html', '<b>Waiting</b> for more data...');
-                    debug.msg.highlight();
-                },
-
-                playing: function (e) {
-                    debug.readyState.set('text', video.readyState);
-                    debug.readyState.getParent().highlight();
-
-                    debug.msg.set('html', 'Playback has started.');
-                    debug.msg.highlight();
-                },
-
-                canplay: function (e) {
-                    debug.readyState.set('text', video.readyState);
-                    debug.readyState.getParent().highlight();
-
-                    debug.msg.set('html',
-                        'Playback possible, but will likely be interrupted for buffering before reaching the end.'
-                    );
-                    debug.msg.highlight();
-                },
-
-                canplaythrough: function (e) {
-                    debug.readyState.set('text', video.readyState);
-                    debug.readyState.getParent().highlight();
-
-                    debug.msg.set('html',
-                        'Most likely, uninterrupted playback all the way through to the end is now possible.'
-                    );
-                    debug.msg.highlight();
-                },
-
-                // Playback
-                play: function (e) {
-                    debug.paused.set('text', video.paused);
-                    debug.paused.getParent().highlight();
-
-                    debug.ended.set('text', video.ended);
-                },
-
-                pause: function (e) {
-                    debug.paused.set('text', video.paused);
-                    debug.paused.getParent().highlight();
-                },
-
-                ended: function (e) {
-                    debug.ended.set('text', video.ended);
-                    debug.ended.getParent().highlight();
-                },
-
-                timeupdate: function (e) {
-                    debug.currentTime.set('text', video.currentTime.round(3));
-                },
-
-                seeking: function (e) {
-                    debug.seeking.set('text', video.seeking);
-                    debug.seeking.getParent().highlight();
-                },
-
-                seeked: function (e) {
-                    debug.seeking.set('text', video.seeking);
-                    debug.seeking.getParent().highlight();
-                },
-
-                // Misc
-                durationchange: function (e) {
-                    debug.duration.set('text', video.duration.round(3));
-                    debug.duration.getParent().highlight();
-                },
-
-                ratechange: function (e) {
-                    debug.playbackRate.set('text', video.playbackRate);
-                    debug.playbackRate.getParent().highlight();
-
-                    debug.defaultPlaybackRate.set('text', video.defaultPlaybackRate);
-                    debug.defaultPlaybackRate.getParent().highlight();
-                },
-
-                volumechange: function (e) {
-                    debug.muted.set('text', video.muted);
-                    debug.muted.getParent().highlight();
-
-                    debug.volume.set('text', video.volume.round(3));
-                    debug.volume.getParent().highlight();
-                }
-
-            }); // end Events
-
-        } // end Debug mode
-
+        }
 
         // Build interface =========================================================
 
@@ -447,18 +247,15 @@ var Moovie = function (videos, options) {
             \
             <div><ol class="playlist"></ol></div>\
         ');
-
-        // Populate the playlist panel
-        options.playlist.each(function (el, index) {
-            var active = index === 0 ? 'active' : '';
-            
+        
+        options.playlist.each(function (item, index) {
             panels.playlist.getElement('ol.playlist').grab(new Element('li', {
                 "data-index": index,
-                "class": active,
+                "class": (index === 0 ? 'active' : ''),
                 "html": '\
                     <div class="checkbox-widget" data-checked="true">\
                         <div class="checkbox"></div>\
-                        <div class="label">' + el.title + '</div>\
+                        <div class="label">' + item.title + '</div>\
                     </div>\
                 '
             }));
@@ -475,8 +272,8 @@ var Moovie = function (videos, options) {
         controls.duration       = new Element('div.duration', { "text": '0.00' });
         controls.settings       = new Element('div.settings', { "title": 'Settings' });
         controls.close          = new Element('div.close', { "title": 'Close panel' });
-        controls.previous       = options.playlist.length > 1 ? new Element('div.previous', { "title": 'Previous' }) : null;
-        controls.next           = options.playlist.length > 1 ? new Element('div.next', { "title": 'Next' }) : null;
+        controls.previous       = options.playlist.length() > 1 ? new Element('div.previous', { "title": 'Previous' }) : null;
+        controls.next           = options.playlist.length() > 1 ? new Element('div.next', { "title": 'Next' }) : null;
 
         // Progress
         controls.progress           = new Element('div.progress');
@@ -542,7 +339,7 @@ var Moovie = function (videos, options) {
         );
         
         controls.grab(controls.wrapper);
-        controls.set('tween', { "duration": 150 });
+        controls.set('tween', { "duration": 300 }); // 150 was to fast for my liking
 
         // Inject and do some post-processing --------------------------------------
         wrapper.adopt(captions, overlay, title, panels, controls);
@@ -637,9 +434,9 @@ var Moovie = function (videos, options) {
 
         // Title -------------------------------------------------------------------
         title.show = function () {
-            var index = panels.playlist.getActive().index;
-            var text = options.playlist[index].title;
-            title.set('html', (index + 1).toString() + '. ' + text);
+            var index = options.playlist.key();
+            var text = options.playlist.current().title;
+            title.set('html', (index).toString() + '. ' + text);
             title.fade('in');
             var timer = setTimeout(function () {
                 title.fade('out');
@@ -658,42 +455,39 @@ var Moovie = function (videos, options) {
                 this.fade('in');
             }
         };
-
+        
         panels.playlist.play = function (action) {
-            var current = panels.playlist.getActive();
-            var active = current.element;
-            var index = current.index;
-            var length = options.playlist.length;
-            var which = 0;
-
-            if (action == 'previous') {
-                which = index - 1;
-                if (which < 0) {
-                    which = length - 1;
-                }
-            } else if (action == 'next') {
-                which = index + 1;
-                if (which > (length - 1)) {
-                    which = 0;
-                }
-            } else if ($type(action) == 'number') {
-                which = action;
+            var item;
+            
+            switch (action) {
+                case 'previous':
+                    item = options.playlist.previous();
+                    break;
+                    
+                case 'next':
+                    item = options.playlist.next();
+                    break;
+                    
+                default:
+                    item = options.playlist.current(action);
             }
+            
+            if (item) {
+                panels.playlist.getElement('ol.playlist li.active').removeClass('active');
+                panels.playlist.getElement('ol.playlist li[data-index="' + (options.playlist.key()) + '"]').addClass('active');
 
-            panels.playlist.setActive(which);
+                video.src = item.src;
+                video.load();
+                video.play();
 
-            video.src = options.playlist[which].src;
-            video.load();
-            video.play();
+                options.captions = Moovie.captions[item.id];
 
-            options.captions = Moovie.captions[options.playlist[which].id];
+                title.show();
 
-            title.setStyle('display', 'block');
-
-            panels.info.getElement('dt.title + dd').set('html', (options.playlist[which].title || new URI(
-                options.playlist[which].src).get('file')));
-            panels.info.getElement('dt.url + dd').set('html', options.playlist[which].src);
-        };
+                panels.info.getElement('dt.title + dd').set('html', (item.title || basename(item.src)));
+                panels.info.getElement('dt.url + dd').set('html', item.src);
+            }
+        }
 
         panels.playlist.getActive = function () {
             var current = panels.playlist.getElement('ol.playlist li.active');
@@ -702,12 +496,6 @@ var Moovie = function (videos, options) {
                 'element': current,
                 'index': index
             };
-        }
-
-        panels.playlist.setActive = function (which) {
-            var active = panels.playlist.getActive().element;
-            active.removeClass('active');
-            panels.playlist.getElement('ol.playlist li[data-index="' + which + '"]').addClass('active');
         }
 
         // Controls ----------------------------------------------------------------
@@ -854,7 +642,7 @@ var Moovie = function (videos, options) {
             video.pause();
         });
 
-        if (options.playlist.length > 1) {
+        if (options.playlist.length() > 1) {
             controls.previous.addEvent('click', function (e) {
                 panels.playlist.play('previous');
             });
@@ -1069,4 +857,325 @@ Moovie.languages = { // You can add additional language definitions here
 // Public static methods
 Moovie.registerCaptions = function (id, captions) {
     this.captions[id] = captions;
+};
+
+Moovie.Modules = {
+    Debug: new Class({
+        initialize: function (video) {
+            this.video = document.id(video);
+            
+            this.build();
+            this.attach();
+        },
+        
+        build: function () {
+            this.element            = new Element('div.debug');
+            this.element.table      = new Element('table');
+            this.element.table.body = new Element('tbody');
+            this.element.msg        = new Element('p', { "text": 'Moovie instance ready.' });
+
+            [
+                'autobuffer',
+                'autoplay',
+                'controls',
+                'loop',
+                'networkState',
+                'readyState',
+                'error',
+                //'buffered',
+                'defaultPlaybackRate',
+                'playbackRate',
+                'duration',
+                'currentTime',
+                'startTime',
+                //'played',
+                //'seekable',
+                'seeking',
+                'paused',
+                'ended',
+                'volume',
+                'muted'
+            ].each(function (el) {
+                var row = new Element('tr'),
+                    label = new Element('td', { "text": el });
+                
+                this.element[el] = new Element('td', { "text": this.video[el] });
+                row.adopt(label, this.element[el]);
+                this.element.table.body.grab(row);
+            }.bind(this));
+
+            this.element.table.grab(this.element.table.body);
+            this.element.adopt(this.element.table, this.element.msg);
+        },
+        
+        attach: function () {
+            this.video.addEvents({
+                // networkState
+                loadstart: function (e) {
+                    this.element.networkState.set('text', this.video.networkState);
+                    this.element.networkState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Now looking for data...');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                progress: function (e) {
+                    this.element.networkState.set('text', this.video.networkState);
+                    this.element.networkState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Now fetching data...');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                suspend: function (e) {
+                    this.element.networkState.set('text', this.video.networkState);
+                    this.element.networkState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Data fetching <b>suspended</b>.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                abort: function (e) {
+                    this.element.networkState.set('text', this.video.networkState);
+                    this.element.networkState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Data fetching <b>aborted</b>.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                error: function (e) {
+                    this.element.networkState.set('text', this.video.networkState);
+                    this.element.networkState.getParent().highlight();
+
+                    this.element.error.set('text', this.video.error.code);
+                    this.element.error.highlight();
+
+                    this.element.msg.set('html', 'An error occurred while fetching data. See <b>error</b> attribute.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                emptied: function (e) {
+                    this.element.networkState.set('text', this.video.networkState);
+                    this.element.networkState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Media resource <b>emptied</b>. Possible error; see <b>error attribute.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                stalled: function (e) {
+                    this.element.networkState.set('text', this.video.networkState);
+                    this.element.networkState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Data throughput is <b>stalled</b>, possibly temporarily.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                // readyState
+                loadedmetadata: function (e) {
+                    this.element.readyState.set('text', this.video.readyState);
+                    this.element.readyState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Duration and dimensions of media resource determined.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                loadeddata: function (e) {
+                    this.element.readyState.set('text', this.video.readyState);
+                    this.element.readyState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Some data available, but more is needed.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                waiting: function (e) {
+                    this.element.readyState.set('text', this.video.readyState);
+                    this.element.readyState.getParent().highlight();
+
+                    this.element.msg.set('html', '<b>Waiting</b> for more data...');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                playing: function (e) {
+                    this.element.readyState.set('text', this.video.readyState);
+                    this.element.readyState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Playback has started.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                canplay: function (e) {
+                    this.element.readyState.set('text', this.video.readyState);
+                    this.element.readyState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Playback possible, but will likely be interrupted for buffering before reaching the end.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                canplaythrough: function (e) {
+                    this.element.readyState.set('text', this.video.readyState);
+                    this.element.readyState.getParent().highlight();
+
+                    this.element.msg.set('html', 'Most likely, uninterrupted playback all the way through to the end is now possible.');
+                    this.element.msg.highlight();
+                }.bind(this),
+
+                // Playback
+                play: function (e) {
+                    this.element.paused.set('text', this.video.paused);
+                    this.element.paused.getParent().highlight();
+
+                    this.element.ended.set('text', this.video.ended);
+                    this.element.ended.getParent().highlight();
+                }.bind(this),
+
+                pause: function (e) {
+                    this.element.paused.set('text', this.video.paused);
+                    this.element.paused.getParent().highlight();
+                }.bind(this),
+
+                ended: function (e) {
+                    this.element.ended.set('text', this.video.ended);
+                    this.element.ended.getParent().highlight();
+                }.bind(this),
+
+                timeupdate: function (e) {
+                    this.element.currentTime.set('text', this.video.currentTime.round(3));
+                    this.element.currentTime.getParent().highlight();
+                }.bind(this),
+
+                seeking: function (e) {
+                    this.element.seeking.set('text', this.video.seeking);
+                    this.element.seeking.getParent().highlight();
+                }.bind(this),
+
+                seeked: function (e) {
+                    this.element.seeking.set('text', this.video.seeking);
+                    this.element.seeking.getParent().highlight();
+                }.bind(this),
+
+                // Misc
+                durationchange: function (e) {
+                    this.element.duration.set('text', this.video.duration.round(3));
+                    this.element.duration.getParent().highlight();
+                }.bind(this),
+
+                ratechange: function (e) {
+                    this.element.playbackRate.set('text', this.video.playbackRate);
+                    this.element.playbackRate.getParent().highlight();
+
+                    this.element.defaultPlaybackRate.set('text', this.video.defaultPlaybackRate);
+                    this.element.defaultPlaybackRate.getParent().highlight();
+                }.bind(this),
+
+                volumechange: function (e) {
+                    this.element.muted.set('text', this.video.muted);
+                    this.element.muted.getParent().highlight();
+
+                    this.element.volume.set('text', this.video.volume.round(3));
+                    this.element.volume.getParent().highlight();
+                }.bind(this)
+            });
+        },
+        
+        toElement: function () {
+            return this.element;
+        }
+    }),
+    
+    Slider: new Class({
+        Extends: Drag,
+        
+        options: {
+            axis: 'x',
+            reverse: false
+        },
+        
+        initialize: function (video, options) {
+            // something with options
+            
+            this.video = document.id(video);
+            this.parent();
+        },
+        
+        build: function () {
+            
+        }
+    }),
+    
+    Iterator: new Class({
+        initialize: function (items) {
+            this.items = items || [];
+            this.index = 0;
+        },
+        
+        key: function () {
+            return this.valid(this.index) ? this.index : false;
+        },
+        
+        length: function () {
+            return this.items.length;
+        },
+        
+        valid: function (key) {
+            return !(key < 0 || key > this.length() - 1);
+        },
+        
+        find: function (key) {
+            return this.valid(key) ? this.items[key] : false;
+        },
+        
+        first: function () {
+            return this.current(0);
+        },
+        
+        previous: function () {
+            return this.current(this.index - 1);
+        },
+        
+        hasPrevious: function () {
+            return this.index > 0;
+        },
+        
+        current: function (key) {
+            if ((typeOf(key) === 'number' && this.valid(key)) || !key) {
+                this.index = key;
+                return this.items[this.key()];
+            }
+            
+            return false;
+        },
+        
+        hasNext: function () {
+            return this.index < (this.length() - 1);
+        },
+        
+        next: function () {
+            return this.current(this.index + 1);
+        },
+        
+        last: function () {
+            return this.current(this.length() - 1);
+        },
+        
+        each: function (callback) {
+            this.items.each(callback, this);
+        }
+    }),
+    
+    Controls: new Class({
+        initialize: function (video) {
+            this.video = document.id(video);
+            
+            this.build();
+            this.attach();
+        },
+        
+        build: function () {
+            
+        },
+        
+        attach: function () {
+            
+        }
+    })
 };

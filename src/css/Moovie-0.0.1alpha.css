@@ -9,7 +9,7 @@ aside {
 }
 
 html {
-    background: url("../img/moovie/bg.png") repeat fixed 0 0 #FFFFFF;
+    background: url("http://colinaarts.com/assets/body-bg.png") repeat fixed 0 0 #FFFFFF;
     color: #444444;
     cursor: default;
     font: 76%/1.8 'Lucida Sans Unicode',Arial,Helvetica,sans-serif;
@@ -18,7 +18,9 @@ html {
     padding: 0;
 }
 
-* + html { overflow-x: hidden; }
+* + html {
+    overflow-x: hidden;
+}
 
 body {
     font-size: 1.1em;
@@ -38,7 +40,8 @@ h6 {
 }
 
 h1,
-h2 {
+h2,
+aside h3 {
     color: #83B834;
     font-family: GaramondItalic,'Palatino Linotype','Lucida Sans Unicode',Arial,Helvetica,sans-serif;
     font-weight: normal;
@@ -46,13 +49,33 @@ h2 {
     text-shadow: 1px 1px 3px #CBCBCB;
 }
 
-h1 { font-size: 3.5em; }
-h1:first-child { margin-top: 0; }
-h2 { font-size: 2.5em; }
-h3 { font-size: 1.4em; }
-h4 { font-size: 1.2em; }
-h5 { font-size: 1.1em; }
-h6 { font-size: 1em; }
+h1 {
+    font-size: 3.5em;
+}
+
+h1:first-child {
+    margin-top: 0;
+}
+
+h2 {
+    font-size: 2.5em;
+}
+
+h3 {
+    font-size: 1.4em;
+}
+
+h4 {
+    font-size: 1.2em;
+}
+
+h5 {
+    font-size: 1.1em;
+}
+
+h6 {
+    font-size: 1em;
+}
 
 p {
     margin: 1.3em 0;
@@ -86,38 +109,57 @@ ol {
     padding: 0 0 0 3em;
 }
 
-ul { list-style: square outside none; }
-li dl { margin: 0 0 0 1.5em; }
+ul {
+    list-style: square outside none;
+}
+
+li dl {
+    margin: 0 0 0 1.5em;
+}
 
 dt {
     font-style: normal;
     font-weight: bold;
 }
 
-dd { margin: 0 0 0 1.5em; }
-dd + dt { margin-top: 0.8em; }
-em { font-style: italic; }
+dd {
+    margin: 0 0 0 1.5em;
+}
+
+dd + dt {
+    margin-top: 0.8em;
+}
+
+em {
+    font-style: italic;
+}
 
 strong {
     font-style: normal;
     font-weight: bold;
 }
 
-abbr { cursor: help; }
+abbr {
+    cursor: help;
+}
 
 ins {
     border-top: 1px solid #CBCBCB;
     text-decoration: none;
 }
 
-q { font-style: italic; }
+q {
+    font-style: italic;
+}
 
 th {
     font-weight: bold;
     text-align: left;
 }
 
-a img { border: 0 none; }
+a img {
+    border: 0 none;
+}
 
 a {
     border-bottom: 1px solid #888888;
@@ -127,7 +169,9 @@ a {
     text-indent: 0;
 }
 
-a { display: inline; }
+a {
+    display: inline;
+}
 
 a:visited {
     border-color: #CBCBCB;
@@ -140,7 +184,7 @@ a:hover {
 }
 
 a[rel~="external"] {
-    background: url("../img/moovie/external.png") no-repeat scroll right center rgba(0, 0, 0, 0);
+    background: url("http://colinaarts.com/assets/icon-external.png") no-repeat scroll right center rgba(0, 0, 0, 0);
     padding: 0 13px 0 0;
 }
 
@@ -151,8 +195,9 @@ textarea {
     font: 1em 'Lucida Sans Unicode',Arial,Helvetica,sans-serif;
 }
 
-textarea { height: 100px; }
-table { border-collapse: collapse; }
+table {
+    border-collapse: collapse;
+}
 
 caption {
     letter-spacing: 0.1em;
@@ -171,11 +216,33 @@ ul {
     padding-left: 1.5em;
 }
 
-li { margin: 0.5em 0; }
+li {
+    margin: 0.5em 0;
+}
 
 ul li {
-    background: url("../img/moovie/arrow-right.png") no-repeat scroll left 0.4em rgba(0, 0, 0, 0);
+    background: url("http://colinaarts.com/assets/arrow-right.png") no-repeat scroll left 0.4em rgba(0, 0, 0, 0);
     padding: 0 0 0 22px;
+}
+
+.tip-wrap,
+.video-tip,
+.likes-tip,
+.section-tip {
+    display: none;
+}
+
+.tip {
+    background: none repeat scroll 0 0 #C45206;
+    border-radius: 4px;
+    color: #FFFFFF;
+    font-size: 0.9em;
+    max-width: 200px;
+    padding: 2px 5px;
+}
+
+.video-tip .tip {
+    opacity: 0.8;
 }
 
 .checkbox-widget .checkbox {
@@ -201,7 +268,7 @@ ul li {
 }
 
 .checkbox-widget[data-checked="true"] .checkbox {
-    background-image: url("../img/checked.png");
+    background-image: url("http://colinaarts.com/assets/player-checked.png");
 }
 
 .moovie > .wrapper {
@@ -340,7 +407,7 @@ ul li {
     top: 0;
 }
 
-.moovie .title {
+.moovie .video-title {
     font-size: 1.6em;
     padding: 3px;
     position: absolute;
@@ -374,7 +441,7 @@ ul li {
 }
 
 .moovie .panels .about {
-    background: url("../img/moovie.png") no-repeat scroll right bottom rgba(0, 0, 0, 0);
+    background: url("http://colinaarts.com/assets/code/moovie/moovie.png") no-repeat scroll right bottom rgba(0, 0, 0, 0);
 }
 
 .moovie .panels .playlist > div {
@@ -437,46 +504,46 @@ ul li {
 }
 
 .moovie .controls > .wrapper > .play {
-    background-image: url("../img/play.png");
+    background-image: url("http://colinaarts.com/assets/player-play.png");
 }
 
 .moovie .controls > .wrapper > .play.paused {
-    background-image: url("../img/pause.png");
+    background-image: url("http://colinaarts.com/assets/player-pause.png");
 }
 
 .moovie .controls > .wrapper > .stop {
-    background-image: url("../img/stop.png");
+    background-image: url("http://colinaarts.com/assets/player-stop.png");
 }
 
 .moovie .controls > .wrapper > .volume .mute {
-    background-image: url("../img/full.png");
+    background-image: url("http://colinaarts.com/assets/player-volume.png");
 }
 
 .moovie .controls > .wrapper > .volume .mute.muted {
-    background-image: url("../img/muted.png");
+    background-image: url("http://colinaarts.com/assets/player-muted.png");
 }
 
 .moovie .controls > .wrapper > .previous {
-    background-image: url("../img/previous.png");
+    background-image: url("http://colinaarts.com/assets/player-previous.png");
 }
 
 .moovie .controls > .wrapper > .next {
-    background-image: url("../img/next.png");
+    background-image: url("http://colinaarts.com/assets/player-next.png");
 }
 
 .moovie .controls > .wrapper > .settings {
-    background-image: url("../img/settings.png");
+    background-image: url("http://colinaarts.com/assets/player-settings.png");
 }
 
 .moovie .controls > .wrapper > .more {
-    background-image: url("../img/more.png");
+    background-image: url("http://colinaarts.com/assets/player-more.png");
 }
 
 .moovie .controls > .wrapper > .close {
-    background-image: url("../img/close.png");
+    background-image: url("http://colinaarts.com/assets/player-close.png");
 }
 
-.moovie .controls > .wrapper > * > .wrapper .popup .more {
+.moovie .controls > .wrapper > * > .wrapper .popup > * {
     height: 13px;
     margin: 10px 0;
     width: 13px;
@@ -525,7 +592,7 @@ ul li {
 }
 
 .moovie .controls > .wrapper .progress .wrapper .time {
-    background: url("../img/timeArrow.png") no-repeat scroll left bottom rgba(0, 0, 0, 0);
+    background: url("http://colinaarts.com/assets/player-progress-time-arrow.png") no-repeat scroll left bottom rgba(0, 0, 0, 0);
     left: 0;
     padding: 0 0 5px 1.5px;
     position: absolute;
@@ -579,15 +646,15 @@ ul li {
 }
 
 .moovie .controls > .wrapper .more .wrapper .popup .about {
-    background-image: url("../img/about.png");
+    background-image: url("http://colinaarts.com/assets/player-about.png");
 }
 
 .moovie .controls > .wrapper .more .wrapper .popup .info {
-    background-image: url("../img/info.png");
+    background-image: url("http://colinaarts.com/assets/player-info.png");
 }
 
 .moovie .controls > .wrapper .more .wrapper .popup .playlist {
-    background-image: url("../img/playlist.png");
+    background-image: url("http://colinaarts.com/assets/player-playlist.png");
 }
 
 .moovie .controls > .wrapper {
