@@ -1,65 +1,56 @@
 Moovie
 ======
-This is a custom controls library for the HTML5 video element.
+Moovie is a custom media API written in MooTools for the HTML5 "video" tag. Or at least that's the direction it's heading in. Moovie is still currently in it's design phase and is not yet considered "production" ready.
 
-Introduction
+This project was originally started by [Colin Aarts](http://colinaarts.com/code/moovie/) and with his permission, I have taken over it's development.
+
+For more information about Moovie's API, please visit the [Wiki]().
+
+Features
 ------------
-Colin has done such an unbelievably amazing job on Moovie, that instead of forking it, I decided to get permission to take over the project, I emailed Colin last year and was able to get full permission to do so. By not forking it, it means Colin still holds the copyright (and he deserves to).
-
-I've been busy myself and have not found the time in the past year to upload it or make any changes to the source. Due to bad email archiving I have lost the updated script that Colin had sent me and have decided to start again from scratch now that I have the time.
+* Track support (SRT only)
+* Styled with CSS
+* Advanced volume control
+* Playlist support (JSON)
+* Supports Fullscreen
+* Realtime Debug panel
+* HUD interface.
 
 Requirements
 ------------
-* MooTools Core 1.2.4
-* MooTools More 1.2.4.2 (Drag, URI)
+* MooTools Core 1.3+
+* MooTools More 1.3.0.1+ (Drag, Tips, HTMLTable)
 
-Use
+Basic Usage
 ---
-This is just a quick summary, for a full depth informative guide please see the Moovie homepage: http://colinaarts.com/code/moovie/
+Please make sure you download from the "alpha" branch. The "master" branch contains Colin's original script.
 
-For multiple videos with a base set of options:
-```php
-var videos  = $$('video'),
-    options = { debug: true, autohideControls: false };
 
-Moovie(videos, options);
+First, include the required scripts inside the ```<body>``` tag down the bottom.
+```html
+<script src="//mydomain.com/js/vendor/mootools/1.4.5/mootools-yui-compressed.js"></script>
+<script src="//mydomain.com/js/vendor/mootools/mootools-more-1.4.0.1.js"></script>
+<script src="//mydomain.com/js/vendor/moovie/0.2.5/moovie-yui-compressed.js"></script>
 ```
 
-For multiple videos with custom and base options:
-```php
-var options = { autohideControls: false }, // Generic options
-    videos  = [
-      { video: $('video-1'), id: 'my-video', options: { debug: true } },
-      { video: $('video-2') },
-      { video: $('video-3'), options: { autohideControls: true } } // overrides the generic option
-    ];
-    
-Moovie(videos, options);
-```
+Now to instantiate:
+```js
+// For a single video element...
+var myVideo = new Moovie('myVideo', {
+    //Options
+    debug: true,
+    playlist: 'http://mydomain.com/playlist.json'
+});
 
-Single video with playlist:
-```php
-var video = {
-  video   : $$('video')[0],
-  id      : 'avatar',
-  options : {
-    'debug'    : true,
-    'playlist' : [
-      {
-        'id'    : 'alice',
-        'src'   : 'http://videos/alice.ogv'
-              
-      },
-      {
-        'id'    : 'shrek',
-        'src'   : 'http://videos/shrek.ogv',
-        'title' : '<cite>Shrek Forever After</cite> theatrical trailer'
-      }
-    ]
-  }
-};
+// For multiple video elements...
+$$('video').Moovie({
+    // Options are shared among all instances
+    debug: true,
+    autohide: false
+});
 
-Moovie([video]);  // Must be passed in as array.
+// And to retreive...
+var instance3 = $$('video')[2].retreive('moovie');
 ```
 
 Demo
@@ -93,4 +84,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
