@@ -1,0 +1,32 @@
+{[
+    {
+        "src":"http://localhost/Moovie/videos/alice-in-wonderland.webm",
+        "title":"Alice in Wonderland",
+        "description":"",
+        "poster":"http://localhost/Moovie/posters/alice-in-wonderland.png"
+    },
+    {
+        "src":"http://localhost/Moovie/posters/shrek-forever-after.mp4",
+        "title":"Shrek Forever After",
+        "description":"",
+        "poster":"http://localhost/Moovie/posters/shrek-forever-after.png",
+        "tracks":[
+            {
+                "src":"http://localhost/Moovie/subtitles/shrek-forever-after.srt",
+                "kind":"subtitles",
+                "srclang":"en",
+                "label":"English"
+            }
+        ],
+        "sources":[
+            {
+                "src":"http://localhost/Moovie/posters/shrek-forever-after.webm",
+                "type":"video/webm"
+            },
+            {
+                "src":"http://localhost/Moovie/posters/shrek-forever-after.ogv",
+                "type":"video/ogg"
+            }
+        ]
+    }
+]}

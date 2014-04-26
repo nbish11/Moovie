@@ -8,26 +8,6 @@ aside {
     display: block;
 }
 
-html {
-    background: url("http://colinaarts.com/assets/body-bg.png") repeat fixed 0 0 #FFFFFF;
-    color: #444444;
-    cursor: default;
-    font: 76%/1.8 'Lucida Sans Unicode',Arial,Helvetica,sans-serif;
-    margin: 0;
-    overflow-y: scroll;
-    padding: 0;
-}
-
-* + html {
-    overflow-x: hidden;
-}
-
-body {
-    font-size: 1.1em;
-    margin: 0;
-    padding: 3em 0;
-}
-
 h1,
 h2,
 h3,
@@ -363,6 +343,7 @@ ul li {
     top: 5px;
 }
 
+/*
 .moovie .overlay .wrapper div {
     line-height: 70px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
@@ -406,6 +387,7 @@ ul li {
     right: 0;
     top: 0;
 }
+*/
 
 .moovie .video-title {
     font-size: 1.6em;
@@ -503,45 +485,30 @@ ul li {
     width: 4ex;
 }
 
-.moovie .controls > .wrapper > .play {
-    background-image: url("http://colinaarts.com/assets/player-play.png");
-}
+/* Control --> Buttons */
+.moovie .controls .play                         { background-image: url("http://colinaarts.com/assets/player-pause.png"); }
+.moovie .controls .stop                         { background-image: url("http://colinaarts.com/assets/player-stop.png"); }
+.moovie .controls .previous                 { background-image: url("http://colinaarts.com/assets/player-previous.png"); }
+.moovie .controls .next                         { background-image: url("http://colinaarts.com/assets/player-next.png"); }
+.moovie .controls .mute                         { background-image: url("http://colinaarts.com/assets/player-volume.png"); }
+.moovie .controls .settings                 { background-image: url("http://colinaarts.com/assets/player-settings.png"); }
+.moovie .controls .more                         { background-image: url("http://colinaarts.com/assets/player-more.png"); }
+.moovie .controls .fullscreen             { background-image: url("http://colinaarts.com/assets/player-close.png"); }
 
-.moovie .controls > .wrapper > .play.paused {
-    background-image: url("http://colinaarts.com/assets/player-pause.png");
-}
+/* Controls --> Button states */
+.moovie .controls .play.paused                            { background-image: url("http://colinaarts.com/assets/player-play.png"); }
+.moovie .controls .mute.muted                              { background-image: url("http://colinaarts.com/assets/player-muted.png"); }
+.moovie .controls .fullscreen.fullscreened    { background-image: url("http://colinaarts.com/assets/player-close.png"); }
 
-.moovie .controls > .wrapper > .stop {
-    background-image: url("http://colinaarts.com/assets/player-stop.png");
-}
 
-.moovie .controls > .wrapper > .volume .mute {
-    background-image: url("http://colinaarts.com/assets/player-volume.png");
-}
 
-.moovie .controls > .wrapper > .volume .mute.muted {
-    background-image: url("http://colinaarts.com/assets/player-muted.png");
-}
 
-.moovie .controls > .wrapper > .previous {
-    background-image: url("http://colinaarts.com/assets/player-previous.png");
-}
 
-.moovie .controls > .wrapper > .next {
-    background-image: url("http://colinaarts.com/assets/player-next.png");
-}
 
-.moovie .controls > .wrapper > .settings {
-    background-image: url("http://colinaarts.com/assets/player-settings.png");
-}
 
-.moovie .controls > .wrapper > .more {
-    background-image: url("http://colinaarts.com/assets/player-more.png");
-}
 
-.moovie .controls > .wrapper > .close {
-    background-image: url("http://colinaarts.com/assets/player-close.png");
-}
+
+
 
 .moovie .controls > .wrapper > * > .wrapper .popup > * {
     height: 13px;
@@ -564,13 +531,6 @@ ul li {
     position: relative;
 }
 
-.moovie .controls > .wrapper .progress .wrapper .bar {
-    background: none repeat scroll 0 0 #FFFFFF;
-    height: 8px;
-    opacity: 0.7;
-    width: 100%;
-}
-
 .moovie .controls > .wrapper .progress .wrapper .buffered {
     background: none repeat scroll 0 0 rgba(0, 255, 0, 0.5);
     bottom: 0;
@@ -578,36 +538,6 @@ ul li {
     position: absolute;
     top: 0;
     z-index: -1;
-}
-
-.moovie .controls > .wrapper .progress .wrapper .time div {
-    background: none repeat scroll 0 0 rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    border-radius: 4px;
-    font-size: 0.9em;
-    left: -50%;
-    line-height: 1;
-    padding: 5px;
-    position: relative;
-}
-
-.moovie .controls > .wrapper .progress .wrapper .time {
-    background: url("http://colinaarts.com/assets/player-progress-time-arrow.png") no-repeat scroll left bottom rgba(0, 0, 0, 0);
-    left: 0;
-    padding: 0 0 5px 1.5px;
-    position: absolute;
-    top: -33px;
-}
-
-.moovie .controls > .wrapper .progress .wrapper .slider {
-    background: none repeat scroll 0 0 #B9DC84;
-    border: 2px solid #FFFFFF;
-    border-radius: 10px;
-    height: 10px;
-    left: -7px;
-    position: absolute;
-    top: -3px;
-    width: 10px;
 }
 
 .moovie .controls > .wrapper .progress {
@@ -671,12 +601,198 @@ ul li {
     left: 0;
     position: absolute;
     right: 0;
+    /*visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 6s, opacity 6s linear;*/
 }
 
+/* --------------------------------------------------------------------------------- */
+
+.moovie > * {
+    color: #fff;
+}
+
+/* Base for label styling */
+[type="checkbox"]:not(:checked),
+[type="checkbox"]:checked {
+  position: absolute;
+  left: -9999px;
+}
+
+label [type="checkbox"]:not(:checked),
+label [type="checkbox"]:checked {
+  position: relative;
+  padding-left: 25px;
+  cursor: pointer;
+}
+
+[type="checkbox"]:not(:checked) + label,
+[type="checkbox"]:checked + label {
+  position: relative;
+  padding-left: 25px;
+  cursor: pointer;
+}
+
+/* checkbox aspect */
+[type="checkbox"]:not(:checked) + label:before,
+[type="checkbox"]:checked + label:before {
+  content: '';
+  position: absolute;
+  left:0; top: 2px;
+  width: 17px; height: 17px;
+  border: 1px solid #aaa;
+  background: #f8f8f8;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.3)
+}
+/* checked mark aspect */
+[type="checkbox"]:not(:checked) + label:after,
+[type="checkbox"]:checked + label:after {
+  content: '✔';
+  position: absolute;
+  top: 0; left: 4px;
+  font-size: 14px;
+  color: #09ad7e;
+  transition: all .2s;
+}
+/* checked mark aspect changes */
+[type="checkbox"]:not(:checked) + label:after {
+  opacity: 0;
+  transform: scale(0);
+}
+[type="checkbox"]:checked + label:after {
+  opacity: 1;
+  transform: scale(1);
+}
+/* disabled checkbox */
+[type="checkbox"]:disabled:not(:checked) + label:before,
+[type="checkbox"]:disabled:checked + label:before {
+  box-shadow: none;
+  border-color: #bbb;
+  background-color: #ddd;
+}
+[type="checkbox"]:disabled:checked + label:after {
+  color: #999;
+}
+[type="checkbox"]:disabled + label {
+  color: #aaa;
+}
+/* accessibility */
+[type="checkbox"]:checked:focus + label:before,
+[type="checkbox"]:not(:checked):focus + label:before {
+  border: 1px dotted blue;
+}
+
+/* Generic hide/show */
+/*.moovie .controls.display {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity .3s linear;
+}*/
+
 .moovie {
-    background: none repeat scroll 0 0 #000000;
-    border: 5px solid #222222;
-    color: #FFFFFF;
-    padding: 30px;
+    margin: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    box-shadow: 0 0 15px #000000;
+}
+
+/* .player */
+.moovie > div {
     position: relative;
 }
+
+/* .debug */
+.moovie > div + div {
+    position: absolute;
+}
+
+.moovie .player .video {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background-color: #000;
+}
+
+.moovie .player .title {
+    font-size: 1.6em;
+    padding: 3px;
+    position: absolute;
+    right: 20px;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    top: 5px;
+}
+
+.moovie .controls .seekbar {
+    width: auto;
+}
+
+.moovie .controls .seekbar .buffered {
+    background: none repeat scroll 0 0 rgba(0, 255, 0, 0.5);
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    top: 0;
+    z-index: -1;
+}
+
+
+.moovie .panels .playlist > div + div {
+    display: table-row;
+    height: 100%;
+}
+
+.moovie .panels .playlist ol {
+    height: 100%;
+}
+
+.moovie .panels .playlist ol li {
+    display: block;
+}
+
+
+/**
+ *  .moovie .overlay
+ */
+.moovie .overlay {
+    background: none repeat scroll 0 0 rgba(0, 0, 0, 0.5);
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.moovie .overlay .modal {
+    background: none repeat scroll 0 0 #A5D260;
+    border: 4px solid #FFFFFF;
+    border-radius: 10px;
+    color: #000000;
+    font-size: 2em;
+    height: 70px;
+    left: 50%;
+    margin-left: -100px;
+    margin-top: -35px;
+    opacity: 0.8;
+    position: absolute;
+    text-align: center;
+    top: 50%;
+    width: 200px;
+    line-height: 70px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.moovie .overlay .modal {
+    cursor: pointer;
+}
+
+/* Events */
+.moovie .overlay .modal:hover {
+    opacity: 0.6;
+}
+
