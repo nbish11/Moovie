@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Moovie - Demo</title>
+        
+        <!-- Moovie styles -->
+        <link rel="stylesheet" type="text/css" href="Source/Moovie.css">
+        
+        <!-- MooTools library -->
+        <script type="text/javascript" src="Lib/mootools-1.5.1/mootools-core-min-full-nocompat.js"></script>
+        <script type="text/javascript" src="Lib/mootools-1.5.1/mootools-more-min-full-nocompat-nolang.js"></script>
+        
+        <!-- TrackInstances mutator -->
+        <script type="text/javascript" src="Lib/elado-mootools-trackinstances-7e02d19/Class.TrackInstances.js"></script>
+        
+        <!-- Moovie library -->
+        <script type="text/javascript" src="Source/Moovie.js"></script>
+        
+        <!-- Moovie: register captions -->
+        <script>// Moovie.registerCaptions('avatar', 'http://localhost/moovie/Avatar.srt');</script>
+        
+        <style>
+            .moovie {
+                width: 670px;
+                height: 320px;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <video poster="http://colinaarts.com/assets/avatar.png" src="http://colinaarts.com/assets/avatar.ogv">
+            <p>Your browser does not support the HTML 5 video element.</p>
+        </video>
+        
+        <script>
+            window.addEvent('domready', function () {
+                if ($$('video').length && $$('video')[0].play) {
+                    var video = {
+                        'video' : $$('video')[0],
+                        'id' : 'avatar',
+                        'options' : {
+                        'debug' : true,
+                        'playlist' : [
+                            {
+                                'id': 'alice',
+                                'src': 'http://colinaarts.com/assets/alice.ogv'
+                            }, {
+                                'id': 'shrek',
+                                'src': 'http://colinaarts.com/assets/shrek.ogv',
+                                'title': '<cite>Shrek Forever After</cite> theatrical trailer'
+                            }
+                        ]
+                        }
+                    };
+                    Moovie([video]);
+                }
+            });
+        </script>
+    </body>
+</html>
