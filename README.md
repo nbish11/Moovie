@@ -10,8 +10,8 @@ I've been busy myself and have not found the time in the past year to upload it 
 
 Requirements
 ------------
-* MooTools Core 1.2.4
-* MooTools More 1.2.4.2 (Drag, URI)
+* MooTools Core 1.5.1
+* MooTools More 1.5.1 (Drag, URI)
 
 Use
 ---
