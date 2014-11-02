@@ -881,22 +881,13 @@ var Moovie = function (videos, options) {
                 },
 
                 progress: function (e) {
-                    var bufferedEnd = video.buffered.end(video.buffered.length - 1);
-                    var duration =  video.duration;
+                    var max = parseInt(video.duration, 10);
+                    var vb = video.buffered;
                     
-                    if (duration > 0) {
-                        //document.getElementById('buffered-amount').style.width = ((bufferedEnd / duration)*100) + "%";
-                        //console.log('progress: ', ((bufferedEnd / duration) * 100) + "%");
-                        var pct = (bufferedEnd / duration) * 100;
+                    if (vb && vb.length) {
+                        var buffer = parseInt(vb.end(0) - vb.start(0), 10);
+                        var pct = (buffer * 100) / max;
                         controls.progress.buffered.setStyle('width', pct + '%');
-                    } else if (e.event.lengthComputable) {
-                        // Progress bar
-                        var pct = e.event.loaded / e.event.total * 100;
-                        controls.progress.buffered.setStyle('width', pct + '%');
-                        
-                        // Info panel
-                        var MB = (e.event.total / 1024 / 1024).round(2);
-                        panels.info.getElement('dt.size + dd').set('html', MB + ' MB');
                     }
                 },
 
