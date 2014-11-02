@@ -78,6 +78,9 @@ var Moovie = function (videos, options) {
             // an effect on the muted state and vice versa.
             this._muted = this.element.muted;
             
+            // Track fullscreen state. Defaults to false, seems reasonable enough anyway.
+            this._fullscreen = false;
+            
             // build Moovie
             this.build();
         },
@@ -88,6 +91,9 @@ var Moovie = function (videos, options) {
             // create some wrappers
             var wrapper = new Element('div').wraps(this.element),
                 container = new Element('div.moovie').wraps(wrapper);
+                
+            this._wrapper = wrapper;        // player
+            this._container = container;    // wraps player and debug
             
             // build debug
             if (this.options.debug) {
@@ -372,7 +378,7 @@ var Moovie = function (videos, options) {
             controls.currentTime    = new Element('div.current-time[text=0:00]');
             controls.duration       = new Element('div.duration[text=0:00]');
             controls.settings       = new Element('div.settings[title=Settings]');
-            controls.close          = new Element('div.close[title=Close panel]');
+            controls.fullscreen     = new Element('div.fullscreen[title=Fullscreen]');   // @todo: change title to reflect state
 
             controls.previous       = options.playlist.length > 1 ? new Element('div.previous[title=Previous]') : null;
             controls.next           = options.playlist.length > 1 ? new Element('div.next[title=Next]') : null;
@@ -427,7 +433,7 @@ var Moovie = function (videos, options) {
                 controls.currentTime, controls.progress,
                 controls.duration, controls.volume,
                 controls.settings, controls.more,
-                controls.close  // will eventually be fullscreen
+                controls.fullscreen  // will eventually be fullscreen
             );
             controls.grab(controls.wrapper);
             
@@ -850,10 +856,13 @@ var Moovie = function (videos, options) {
                 panels.update('settings');
             });
             
-            // Events - controls.playback.close
-            // @future: toggle fullscreen
-            controls.close.addEvent('click', function (e) {
-                panels.update('none');
+            // Events - controls.playback.fullscreen
+            controls.fullscreen.addEvent('click', function (e) {
+                if (self._fullscreen) {
+                    self.cancelFullScreen();
+                } else {
+                    self.requestFullScreen();
+                }
             });
             
             video.addEvents({
@@ -1007,6 +1016,29 @@ var Moovie = function (videos, options) {
             var offsetPc = offsetPx / barH * 100;
             var volume = 1 - (1 / 100 * offsetPc).limit(0, 1);
             return volume;
+        },
+        
+        requestFullScreen: function () {
+            if (this._wrapper.requestFullscreen) { this._wrapper.requestFullscreen(); }
+            else if (this._wrapper.mozRequestFullScreen) { this._wrapper.mozRequestFullScreen(); }
+            else if (this._wrapper.webkitRequestFullScreen) { this._wrapper.webkitRequestFullScreen(); }
+            else if (this._wrapper.msRequestFullscreen) { this._wrapper.msRequestFullscreen(); }
+            
+            // custom event hooks WILL be added later. But for now, I just want to 
+            // put Moovie into a more or less "working" prototype.
+            //this.fireEvent('fullscreenchange', { target: this._wrapper });
+            
+            this._fullscreen = true;
+        },
+        
+        // I hate using exitFullscreen(), cancelFullscreen sounds much nicer.
+        cancelFullScreen: function () {
+            if (document.exitFullscreen) { document.exitFullscreen(); }
+            else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
+            else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen(); }
+            else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+            // this.fireEvent('fullscreenchange', { target: this._wrapper });
+            this._fullscreen = false;
         },
         
         toElement: function () {
