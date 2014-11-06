@@ -11,7 +11,7 @@
     text-indent: 0;
 }
 
-.moovie .tip {
+.tip {
     background: none repeat scroll 0 0 #C45206;
     border-radius: 4px;
     color: #FFFFFF;
@@ -20,14 +20,14 @@
     padding: 2px 5px;
 }
 
-.moovie .tip-wrap,
-.moovie .video-tip,
-.moovie .likes-tip,
-.moovie .section-tip {
+.tip-wrap,
+.video-tip,
+.likes-tip,
+.section-tip {
     display: none;
 }
 
-.moovie .video-tip .tip {
+.video-tip .tip {
     opacity: 0.8;
 }
 
@@ -58,7 +58,7 @@
 }
 
 /* .moovie > .player */
-.moovie > .wrapper {
+.moovie > .player {
     position: relative;
 }
 
@@ -156,7 +156,7 @@
 }
 
 /* .moovie > .player > .title */
-.moovie .video-title {
+.moovie .player > .title {
     font-size: 1.6em;
     padding: 3px;
     position: absolute;
@@ -358,7 +358,7 @@
     position: absolute;
 }
 
-.moovie .controls > .wrapper .progress .wrapper .slider {
+.moovie .controls > .wrapper .progress .wrapper .knob {
     background: none repeat scroll 0 0 #B9DC84;
     border: 2px solid #FFFFFF;
     border-radius: 10px;
@@ -407,7 +407,7 @@
     width: 8px;
 }
 
-.moovie .controls > .wrapper .volume .wrapper .popup .slider {
+.moovie .controls > .wrapper .volume .wrapper .popup .knob {
     background: none repeat scroll 0 0 #B9DC84;
     border: 2px solid #FFFFFF;
     border-radius: 10px;
