@@ -440,8 +440,8 @@ var Moovie = function (videos, options) {
             wrapper.adopt(captions, overlay, title, panels, controls);
             
             // Get the knob offsets for later
-            controls.progress.knob.left   = controls.progress.knob.getStyle('left').toInt() || -7;
-            controls.volume.knob.top      = controls.volume.knob.getStyle('top').toInt() || 7;
+            controls.progress.knob.left   = controls.progress.knob.getStyle('left').toInt();
+            controls.volume.knob.top      = controls.volume.knob.getStyle('top').toInt();
 
             // Adjust height of panel container to account for controls bar
             panels.setStyle('height', panels.getStyle('height').toInt() - controls.getStyle('height').toInt());
