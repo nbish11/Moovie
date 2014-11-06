@@ -372,7 +372,7 @@ var Moovie = function (videos, options) {
             // General
             controls.play           = new Element('div.play');  // @todo: implement "title"...
             controls.stop           = new Element('div.stop[title=Stop]');
-            controls.currentTime    = new Element('div.current-time[text=0:00]');
+            controls.currentTime    = new Element('div.elapsed[text=0:00]');
             controls.duration       = new Element('div.duration[text=0:00]');
             controls.settings       = new Element('div.settings[title=Settings]');
             controls.fullscreen     = new Element('div.fullscreen[title=Fullscreen]');   // @todo: change title to reflect state

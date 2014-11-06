@@ -285,7 +285,7 @@
     width: 13px;
 }
 
-.moovie .controls > .wrapper > .current-time,
+.moovie .controls > .wrapper > .elapsed,
 .moovie .controls > .wrapper > .duration {
     overflow: hidden;
     width: 4ex;
