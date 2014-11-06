@@ -581,7 +581,7 @@ ul li {
 }
 
 .moovie .controls > .wrapper .progress .wrapper .played {
-    background-color: #FF0000; /* for testing */
+    background-color: #B9DC84;
     bottom: 0;
     height: 100%;
     position: absolute;
@@ -1269,7 +1269,7 @@ ul li {
 }
 
 .moovie .controls > .wrapper .progress .wrapper .played {
-    background-color: #FF0000; /* for testing */
+    background-color: #B9DC84;
     bottom: 0;
     height: 100%;
     position: absolute;
