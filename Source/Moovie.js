@@ -23,6 +23,201 @@ provides: [Element.moovie]
 */
 
 var Moovie = function (videos, options) {
+var Debug = new Class({
+    properties: [
+        'autoplay',
+        'controls',
+        'poster',
+        'videoWidth',
+        'videoHeight',
+        'MediaError',
+        'currentSrc',
+        'networkState',
+        'readyState',
+        'seeking',
+        'currentTime',
+        'duration',
+        'paused',
+        'ended',
+        'volume',
+        'muted'
+    ],
+    
+    initialize: function (video) {
+        this.video = document.id(video);
+        this.bound = {
+            loadstart: this.loadstart.bind(this),
+            progress: this.progress.bind(this),
+            suspend: this.suspend.bind(this),
+            abort: this.abort.bind(this),
+            error: this.error.bind(this),
+            emptied: this.emptied.bind(this),
+            play: this.play.bind(this),
+            pause: this.pause.bind(this),
+            loadedmetadata: this.loadedmetadata.bind(this),
+            loadeddata: this.loadeddata.bind(this),
+            waiting: this.waiting.bind(this),
+            canplay: this.canplay.bind(this),
+            canplaythrough: this.canplaythrough.bind(this),
+            seeking: this.seeking.bind(this),
+            seeked: this.seeked.bind(this),
+            timeupdate: this.timeupdate.bind(this),
+            ended: this.ended.bind(this),
+            durationchange: this.durationchange.bind(this),
+            volumechange: this.volumechange.bind(this)
+        };
+        
+        this.build();
+        this.attach();
+    },
+    
+    build: function () {
+        this.elements = {
+            debug: new Element('div.debug'),
+            table: new Element('table'),
+            tbody: new Element('tbody'),
+            tfoot: new Element('td[colspan=2][text=Instance ready...]')
+        };
+        
+        this.properties.forEach(function (el) {
+            var row = new Element('tr'),
+                cell = new Element('td[text=' + el + ']');
+            this.elements[el] = new Element('td[text=' + this.video[el] + ']');
+            row.adopt(cell, this.elements[el]);
+            this.elements.tbody.grab(row);
+        }.bind(this));
+        
+        this.elements.table.grab(
+            this.elements.tbody
+        );
+        
+        this.elements.debug.adopt(
+            this.elements.tbody,
+            new Element('tfoot').grab(new Element('tr').grab(this.elements.tfoot))
+        );
+    },
+    
+    attach: function () {
+        this.video.addEvents(this.bound);
+    },
+    
+    detach: function () {
+        this.video.removeEvents(this.bound);
+    },
+    
+    enable: function () {
+        // add to DOM
+        this.attach();
+    },
+    
+    disable: function () {
+        this.detach();
+        // remove from DOM
+    },
+    
+    flash: function (key, val, msg) {
+        this.elements[key].set('text', val);
+        this.elements[key].getParent().highlight();
+        if (msg) {
+            this.elements.tfoot.set('text', msg);
+            this.elements.tfoot.highlight();
+        }
+    },
+    
+    loadstart: function () {
+        this.flash('networkState', this.video.networkState,
+            'The video has begun it\'s resource selection algorithm.');
+    },
+    
+    progress: function () {
+        this.flash('networkState', this.video.networkState,
+            'Currently fetching media data...');
+    },
+    
+    suspend: function () {
+        this.flash('networkState', this.video.networkState,
+            'Fetching media data has intentionally been suspended.');
+    },
+    
+    abort: function () {
+        this.flash('networkState', this.video.networkState,
+            'The fetching of media data has been stopped (not an error).');
+    },
+    
+    error: function () {
+        this.flash('networkState', this.video.networkState);
+        this.flash('MediaError', this.video.MediaError,
+            'An error has occurred while fetching media data.');
+    },
+    
+    emptied: function () {
+        this.flash('networkState', this.video.networkState,
+            'The video\'s network state has gone from previously full to empty.');
+    },
+    
+    play: function () {
+        this.flash('paused', this.video.paused);
+        this.flash('ended', this.video.ended);
+    },
+    
+    pause: function () {
+        this.flash('paused', this.video.paused);
+    },
+    
+    loadedmetadata: function () {
+        this.flash('readyState', this.video.readyState,
+            'Video dimensions, duration and text tracks are ready.');
+    },
+    
+    loadeddata: function () {
+        this.flash('readyState', this.video.readyState,
+            'Some data is available, but more is needed.');
+    },
+    
+    waiting: function () {
+        this.flash('readyState', this.video.readyState,
+            'Waiting for the next frame to become available.');
+    },
+    
+    canplay: function () {
+        this.flash('readyState', this.video.readyState,
+            'Video can play, but will likely encounter buffering issues.');
+    },
+    
+    canplaythrough: function () {
+        this.flash('readyState', this.video.readyState,
+            'Video is likely to play from start to finish, without buffering.');
+    },
+    
+    seeking: function () {
+        this.flash('seeking', this.video.seeking);
+    },
+    
+    seeked: function () {
+        this.flash('seeking', this.video.seeking);
+    },
+    
+    timeupdate: function () {
+        this.flash('currentTime', this.video.currentTime.round(3));
+    },
+    
+    ended: function () {
+        this.flash('ended', this.video.ended);
+    },
+    
+    durationchange: function () {
+        this.flash('duration', this.video.duration.round(3));
+    },
+    
+    volumechange: function () {
+        this.flash('muted', this.video.muted);
+        this.flash('volume', this.video.volume.round(3));
+    },
+    
+    toElement: function () {
+        return this.elements.debug;
+    }
+});
     // The main function, which handles one <video> at a time.
     // <http://www.urbandictionary.com/define.php?term=Doit&defid=3379319>
     var Doit = new Class({
@@ -97,159 +292,12 @@ var Moovie = function (videos, options) {
             
             // build debug
             if (this.options.debug) {
-                this.buildDebug(wrapper, container);
+                this.debug = new Debug(this.element);
+                $(this.debug).inject(container);
             }
             
             // build player
             this.buildPlayer(wrapper, container)
-        },
-        
-        buildDebug: function (wrapper, container) {
-            // references - so I don't have to bind
-            var video = this.element,
-                options = this.options;
-            
-            // Build interface -------------------------------------------------------
-            var debug = new Element('div.debug');
-            debug.table = new Element('table');
-            debug.table.body = new Element('tbody');
-            debug.msg = new Element('p[text=Moovie instance ready...]');
-
-            ['autobuffer', 'autoplay', 'controls', 'loop', 'networkState', 'readyState', 'error' /*, 'buffered'*/ ,
-            'defaultPlaybackRate', 'playbackRate', 'duration', 'currentTime', 'startTime' /*, 'played', 'seekable'*/ ,
-            'seeking', 'paused', 'ended', 'volume', 'muted'
-            ].each(function (el) {
-                var row = new Element('tr');
-                var label = new Element('td[text=' + el + ']');
-                debug[el] = new Element('td[text=' + video[el] + ']');
-
-                row.adopt(label, debug[el]);
-                debug.table.body.grab(row);
-            });
-
-            debug.table.grab(debug.table.body);
-            debug.adopt(debug.table, debug.msg);
-            debug.inject(container);
-            
-            var setAndFlash = function (key, value) {
-                debug[key].set('text', value);
-                debug[key].getParent().highlight();
-            };
-            var flash = function (message) {
-                debug.msg.set('html', message);
-                debug.msg.highlight();
-            };
-            
-            video.addEvents({
-                // networkState
-                loadstart: function (e) {
-                    setAndFlash('networkState', video.networkState);
-                    flash('Now looking for data...');
-                },
-
-                progress: function (e) {
-                    setAndFlash('networkState', video.networkState);
-                    flash('Fetching data...');
-                },
-
-                suspend: function (e) {
-                    setAndFlash('networkState', video.networkState);
-                    flash('Data fetching <strong>suspended</strong>.');
-                },
-
-                abort: function (e) {
-                    setAndFlash('networkState', video.networkState);
-                    flash('Data fetching <strong>aborted</strong>.');
-                },
-
-                error: function (e) {
-                    setAndFlash('networkState', video.networkState);
-                    setAndFlash('error', video.error.code);
-                    flash('An error occurred while fetching data. See <strong>error</strong> attribute.');
-                },
-
-                emptied: function (e) {
-                    setAndFlash('networkState', video.networkState);
-                    flash('Media resource <strong>emptied</strong>. Possible error; see <strong>error</strong> attribute.');
-                },
-
-                stalled: function (e) {
-                    setAndFlash('networkState', video.networkState);
-                    flash('Data throughput is <strong>stalled</strong>, possibly temporarily.');
-                },
-
-                // readyState
-                loadedmetadata: function (e) {
-                    setAndFlash('readyState', video.readyState);
-                    flash('Duration and dimensions of media resource determined.');
-                },
-
-                loadeddata: function (e) {
-                    setAndFlash('readyState', video.readyState);
-                    flash('Some data available, but more is needed.');
-                },
-
-                waiting: function (e) {
-                    setAndFlash('readyState', video.readyState);
-                    flash('<strong>Waiting</strong> for more data...');
-                },
-
-                playing: function (e) {
-                    setAndFlash('readyState', video.readyState);
-                    flash('Playback has started');
-                },
-
-                canplay: function (e) {
-                    setAndFlash('readyState', video.readyState);
-                    flash('Playback possible, but will likely be interrupted for buffering before reaching the end.');
-                },
-
-                canplaythrough: function (e) {
-                    setAndFlash('readyState', video.readyState);
-                    flash('Most likely, uninterrupted playback all the way through to the end is now possible.');
-                },
-
-                // Playback
-                play: function (e) {
-                    setAndFlash('paused', video.paused);
-                    setAndFlash('ended', video.ended);
-                },
-
-                pause: function (e) {
-                    setAndFlash('paused', video.paused);
-                },
-
-                ended: function (e) {
-                    setAndFlash('ended', video.ended);
-                },
-
-                timeupdate: function (e) {
-                    setAndFlash('currentTime', video.currentTime.round(3));
-                },
-
-                seeking: function (e) {
-                    setAndFlash('seeking', video.seeking);
-                },
-
-                seeked: function (e) {
-                    setAndFlash('seeking', video.seeking);
-                },
-
-                // Misc
-                durationchange: function (e) {
-                    setAndFlash('duration', video.duration.round(3));
-                },
-
-                ratechange: function (e) {
-                    setAndFlash('playbackRate', video.playbackRate);
-                    setAndFlash('defaultPlaybackRate', video.defaultPlaybackRate);
-                },
-
-                volumechange: function (e) {
-                    setAndFlash('muted', video.muted);
-                    setAndFlash('volume', video.volume.round(3));
-                }
-            });
         },
         
         buildPlayer: function (wrapper, container) {
