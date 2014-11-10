@@ -1129,11 +1129,9 @@ Moovie.registerCaptions = function (videoid, tracksrc, tracklang) {
                 parseFloat(t[3], 10) / 1000;
         };
         
-        // format srt file to all newlines ("\n").
-        data = data.replace(/(?:\r\n|\r|\n)/gm, '\n');
-        
-        // each cue is separated by two newline characters
-        data = data.split('\n\n');
+        // Replace all newline characters with "\n" then split on
+        // every occurrence of "\n\n"; aka each cue.
+        data = data.replace(/\r?\n/gm, '\n').split('\n\n');
         
         data.forEach(function (cue) {
             cue = cue.split('\n');
