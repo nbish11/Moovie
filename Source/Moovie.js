@@ -378,7 +378,6 @@ var Moovie = function (videos, options) {
             captions.caption    = new Element('p');
             
             captions.grab(captions.caption);
-            
             captions.hide();
 
             // Overlay -----------------------------------------------------------------
