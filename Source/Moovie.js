@@ -219,6 +219,67 @@ var Moovie = function (videos, options) {
         }
     });
     
+    // keep in mind you must call next() 
+    // to select the first item.
+    var Iterator = new Class({
+        index: -1,
+        collection: [],
+        legth: 0,
+        
+        initialize: function (collection) {
+            this.collection.combine(collection);
+            this.length = this.collection.length;
+        },
+        
+        rewind: function () {
+            this.index = -1;
+            return this;
+        },
+        
+        hasPrevious: function () {
+            return this.index > 0;
+        },
+        
+        previous: function () {
+            if (this.hasPrevious()) {
+                this.index = this.index - 1;
+                return this.current();
+            }
+            
+            return false;
+        },
+        
+        hasNext: function () {
+            return this.index < this.collection.length - 1;
+        },
+        
+        next: function () {
+            if (this.hasNext()) {
+                this.index = this.index + 1;
+                return this.current();
+            }
+            
+            return false;
+        },
+        
+        current: function () {
+            return this.collection[this.index];
+        },
+        
+        each: function (callback, bind) {
+            var active = this.index;
+            this.rewind();
+            
+            while (this.hasNext()) {
+                var current = this.next();
+                callback.call(bind || this, this.index, current,
+                    active === -1 ? 0 : active);
+            }
+            
+            this.index = active;
+        }
+    });
+    
     // The main function, which handles one <video> at a time.
     // <http://www.urbandictionary.com/define.php?term=Doit&defid=3379319>
     var Doit = new Class({
@@ -250,6 +311,10 @@ var Moovie = function (videos, options) {
                 src: this.element.src,
                 title: this.options.title
             });
+            
+            // turn playlist into an iterator object.
+            this.playlist = new Iterator(this.options.playlist)
+            this.playlist.next();   // Set to first item.
             
             // turn off HTML5 native video controls
             this.element.controls = false;
@@ -400,17 +465,15 @@ var Moovie = function (videos, options) {
             ');
             
             // content for playlist
-            this.options.playlist.each(function (el, index) {
-                var active = index === 0 ? 'active' : '';
-                
+            this.playlist.each(function (index, item, active) {
                 panels.playlist.getElement('ol.playlist').grab(new Element('li', {
                     'data-index': index,
-                    'class': active,
+                    'class': (index === active ? 'active' : ''),
                     'html': '\
                         <div class="checkbox-widget" data-checked="true">\
-                        <div class="checkbox"></div>\
-                        <div class="label">' + el.title + '</div>\
-                    </div>\
+                            <div class="checkbox"></div>\
+                            <div class="label">' + item.title + '</div>\
+                        </div>\
                 '}));
             });
 
@@ -426,8 +489,8 @@ var Moovie = function (videos, options) {
             controls.settings       = new Element('div.settings[title=Settings]');
             controls.fullscreen     = new Element('div.fullscreen[title=Fullscreen]');   // @todo: change title to reflect state
 
-            controls.previous       = options.playlist.length > 1 ? new Element('div.previous[title=Previous]') : null;
-            controls.next           = options.playlist.length > 1 ? new Element('div.next[title=Next]') : null;
+            controls.previous       = this.playlist.length > 1 ? new Element('div.previous[title=Previous]') : null;
+            controls.next           = this.playlist.length > 1 ? new Element('div.next[title=Next]') : null;
 
             // Progress
             controls.progress           = new Element('div.progress');
@@ -474,15 +537,13 @@ var Moovie = function (videos, options) {
             controls.more.popup.set('tween', {duration: 150});
             
             controls.wrapper.adopt(
-                controls.play, controls.stop,
-                controls.previous, controls.next,
-                controls.currentTime, controls.progress,
-                controls.duration, controls.volume,
-                controls.settings, controls.more,
-                controls.fullscreen  // will eventually be fullscreen
+                controls.play, controls.stop, controls.previous,
+                controls.next, controls.currentTime, controls.progress,
+                controls.duration, controls.volume, controls.settings,
+                controls.more, controls.fullscreen
             );
-            controls.grab(controls.wrapper);
             
+            controls.grab(controls.wrapper);
             controls.set('tween', {duration: 150});
             
             // Inject and do some post-processing --------------------------------------
@@ -613,33 +674,37 @@ var Moovie = function (videos, options) {
             
             // Methods - panels.playlist.play
             panels.playlist.play = function (action) {
-                var current = panels.playlist.getActive();
-                var active = current.element;
-                var index = current.index;
-                var length = options.playlist.length;
-                var which = 0;
+                var current = self.playlist.current();
 
                 if (action == 'previous') {
-                    which = index - 1;
-                    
+                    if (self.playlist.hasPrevious()) {
+                        current = self.playlist.previous();
+                        
                     // change this to a "no more previous videos in playlist" message?
-                    if (which < 0) {
-                        which = length - 1;
+                    } else {
+                        self.playlist.index = self.playlist.length - 1;
+                        current = self.playlist.current();
                     }
                 } else if (action == 'next') {
-                    which = index + 1;
+                    if (self.playlist.hasNext()) {
+                        current = self.playlist.next();
                     
                     // change this to a "last video in playlist" message?
-                    if (which > (length - 1)) {
-                        which = 0;
+                    } else {
+                        self.playlist.rewind().next()
+                        current = self.playlist.current();
                     }
                 } else if (typeOf(action) == 'number') {
-                    which = action;
+                    if (action >= 0 && action < self.playlist.length - 1) {
+                        self.playlist.index = action;
+                        current = self.playlist.current();
+                    }
                 }
 
-                panels.playlist.setActive(which);
+                panels.playlist.setActive(self.playlist.index);
 
-                video.src = options.playlist[which].src;
+                video.src = current.src;
+                video.poster = current.poster;
                 video.load();
                 video.play();
 
@@ -648,8 +713,8 @@ var Moovie = function (videos, options) {
 
                 title.show();
 
-                panels.info.getElement('dt.title + dd').set('html', (options.playlist[which].title || new URI(options.playlist[which].src).get('file')));
-                panels.info.getElement('dt.url + dd').set('html', options.playlist[which].src);
+                panels.info.getElement('dt.title + dd').set('html', (current.title || new URI(current.src).get('file')));
+                panels.info.getElement('dt.url + dd').set('html', current.src);
             };
             
             // Methods - panels.playlist.getActive
@@ -660,10 +725,9 @@ var Moovie = function (videos, options) {
             }
             
             // Methods - panels.playlist.setActive
-            panels.playlist.setActive = function (which) {
-                var active = panels.playlist.getActive().element;
-                active.removeClass('active');
-                panels.playlist.getElement('ol.playlist li[data-index="' + which + '"]').addClass('active');
+            panels.playlist.setActive = function (index) {
+                var active = panels.playlist.getActive().element.removeClass('active');
+                panels.playlist.getElement('ol.playlist li[data-index="' + index + '"]').addClass('active');
             }
 
             // Methods - controls.play.update
@@ -814,7 +878,7 @@ var Moovie = function (videos, options) {
             
             // Events - controls.playback.previous
             // Events - controls.playback.next
-            if (options.playlist.length > 1) {
+            if (this.playlist.length > 1) {
                 controls.previous.addEvent('click', function (e) {
                     panels.playlist.play('previous');
                 });
@@ -925,7 +989,7 @@ var Moovie = function (videos, options) {
                 },
 
                 ended: function (e) {
-                    if (options.playlist.length > 1) {
+                    if (this.playlist.length > 1) {
                         panels.playlist.play('next');
                     } else {
                         controls.play.update();
@@ -970,7 +1034,7 @@ var Moovie = function (videos, options) {
                     // Captions
                     var found = false;
                     
-                    var ref = Moovie.captions[options.playlist[panels.playlist.getActive().index].id];
+                    var ref = Moovie.captions[self.playlist.current().id];
                     if (ref && options.showCaptions) {
                         ref[options.captionLang].each(function (caption) {
                             if (video.currentTime >= caption.start && video.currentTime <= caption.end) {
