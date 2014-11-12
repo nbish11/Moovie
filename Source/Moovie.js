@@ -280,6 +280,60 @@ var Moovie = function (videos, options) {
         }
     });
     
+    var MediaSlider = new Class({
+        Implements: [Events, Options],
+        options: {
+            mode: 'horizontal'    // horizontal:x, vertical:y
+        },
+        
+        initialize: function (knob, bar, options) {
+            this.knob = document.id(knob);
+            this.bar = document.id(bar);
+            this.setOptions(options);
+            this.mode = this.options.mode === 'vertical' ? 'y' : 'x';
+            this.dragging = false;
+            this.offset = this.getOffset();
+            this.drag = new Drag(this.knob, {
+                snap: 0,
+                modifiers: this.mode === 'y' ? { x: false } : { y: false },
+                onStart: this.start.bind(this),
+                onCancel: this.cancel.bind(this),
+                onComplete: this.complete.bind(this),
+                onDrag: this.drag.bind(this)
+            });
+        },
+        
+        start: function (el, e) {
+            this.dragging = true;
+        },
+        
+        cancel: function (el, e) {
+            this.dragging = true;
+        },
+        
+        complete: function (el, e) {
+            this.dragging = false;
+            this.fireEvent('complete', [e]);
+        },
+        
+        drag: function (el, e) {
+            var xy = this.bar.getPosition()[this.mode];
+            var wh = this.bar.getSize()[this.mode];
+            var style = this.mode === 'y' ? 'top' : 'left';
+            var page = e.page[this.mode];
+            
+            if (page < xy) { this.knob.setStyle(style, this.offset); }
+            else if (page > xy + wh) { this.knob.setStyle(style, this.offset + wh); }
+            
+            this.dragging = true;
+            this.fireEvent('drag', [e]);
+        },
+        
+        getOffset: function () {
+            return this.knob.getStyle(this.mode === 'y' ? 'top' : 'left').toInt();
+        }
+    });
+    
     // The main function, which handles one <video> at a time.
     // <http://www.urbandictionary.com/define.php?term=Doit&defid=3379319>
     var Doit = new Class({
@@ -547,10 +601,6 @@ var Moovie = function (videos, options) {
             
             // Inject and do some post-processing --------------------------------------
             wrapper.adopt(captions, overlay, title, panels, controls);
-            
-            // Get the knob offsets for later
-            controls.progress.knob.left   = controls.progress.knob.getStyle('left').toInt();
-            controls.volume.knob.top      = controls.volume.knob.getStyle('top').toInt();
 
             // Adjust height of panel container to account for controls bar
             panels.setStyle('height', panels.getStyle('height').toInt() - controls.getStyle('height').toInt());
@@ -568,71 +618,31 @@ var Moovie = function (videos, options) {
                 $$(panels.playlist, panels.playlist.getChildren()).setStyle('display', 'block');
                 // Holy crap, that is ugly. One day, CSS will actually be able to lay out inferfaces. Or maybe not.
             })();
-
-            // Make seekbar draggable
-            controls.progress.knob.drag = new Drag(controls.progress.knob, {
-                modifiers: { y: false },
-                snap: 0,
-                onStart: function (el) {
-                    el.beingDragged = true;
-                },
-                
-                onDrag: function (el, e) {
-                    var barX = controls.progress.bar.getPosition().x;
-                    var barW = controls.progress.bar.getSize().x;
-                    
-                    if (e.page.x < barX) {
-                        el.setStyle('left', el.left);
-                    } else if (e.page.x > barX + barW) {
-                        el.setStyle('left', el.left + barW);
-                    }
-                    
-                    controls.progress.time.update(true, e.page.x);
-                },
-                
-                onComplete: function (el, e) {
-                    el.beingDragged = false;
-                    video.currentTime = self.locToTime(e.page.x, controls, video);
-                    
-                    if (video.paused) {
-                        video.play();
-                    }
-                },
-                
-                onCancel: function (el) {
-                    el.beingDragged = true;
-                }
-            });
             
-            // make volume draggable
-            controls.volume.knob.drag = new Drag(controls.volume.knob, {
-                modifiers: { x: false },
-                snap: 0,
-                onStart: function (el) {
-                    el.beingDragged = true;
-                },
-                
-                onDrag: function (el, e) {
-                    video.volume = self.locToVolume(e.page.y, controls);
+            // Make seekbar draggable
+            controls.progress.slider = new MediaSlider(controls.progress.knob,
+                controls.progress.bar, {
+                    mode: 'horizontal',
+                    onDrag: function (e) {
+                        controls.progress.time.update(true, e.page.x);
+                    },
                     
-                    var barY = controls.volume.bar.getPosition().y;
-                    var barH = controls.volume.bar.getSize().y;
-                    
-                    if (e.page.y < barY) {
-                        el.setStyle('top', el.top);
-                    } else if (e.page.y > barY + barH) {
-                        el.setStyle('top', el.top + barH);
+                    onComplete: function (e) {
+                        video.currentTime = self.locToTime(e.page.x, controls, video);
+                        if (video.paused) { video.play(); }
                     }
-                },
-                
-                onComplete: function (el, e) {
-                    el.beingDragged = false;
-                },
-                
-                onCancel: function (el) {
-                    el.beingDragged = true;
                 }
-            });
+            );
+
+            // make volume draggable
+            controls.volume.slider = new MediaSlider(controls.volume.knob,
+                controls.volume.bar, {
+                    mode: 'vertical',
+                    onDrag: function (e) {
+                        video.volume = self.locToVolume(e.page.y, controls);
+                    }
+                }
+            );
 
             // Methods - overlay.update
             overlay.update = function (which) {
@@ -704,12 +714,9 @@ var Moovie = function (videos, options) {
 
                 video.src = current.src;
                 video.poster = current.poster;
+                
                 video.load();
                 video.play();
-
-                // this needs to change to the method I used in "timeupdate"
-                //options.captions = Moovie.captions[options.playlist[which].id];
-
                 title.show();
 
                 panels.info.getElement('dt.title + dd').set('html', (current.title || new URI(current.src).get('file')));
@@ -740,12 +747,12 @@ var Moovie = function (videos, options) {
             
             // Methods - controls.progress.update
             controls.progress.update = function (action) {
-                if ( ! controls.progress.knob.beingDragged) {
+                if ( ! controls.progress.slider.dragging) {
                     var el = controls.progress.knob;
                     var pct = video.currentTime / video.duration * 100;
                     var width = controls.progress.bar.getSize().x;
                     var offset = (width / 100) * pct;
-                    el.setStyle('left', offset + el.left + 'px');
+                    el.setStyle('left', offset + controls.progress.slider.offset + 'px');
                 }
             };
             
@@ -758,8 +765,8 @@ var Moovie = function (videos, options) {
                     controls.progress.time.setStyle('left', offset - barX + 'px');
                 } else {
                     var sliderX = controls.progress.knob.getPosition().x;
-                    controls.progress.time.setStyle('left', sliderX - barX - controls.progress.knob.left + 'px');
-                    offset = sliderX - controls.progress.knob.left;
+                    controls.progress.time.setStyle('left', sliderX - barX - controls.progress.slider.offset + 'px');
+                    offset = sliderX - controls.progress.slider.offset;
                 }
                 
                 this.getFirst().set('text', self.parseTime(self.locToTime(offset, controls, video)));
@@ -786,14 +793,14 @@ var Moovie = function (videos, options) {
                 } else {
                     controls.volume.mute.removeClass('muted');
                 }
-
-                if (!controls.volume.knob.beingDragged) {
+                
+                if ( ! controls.volume.slider.dragging) {
                     var knob = controls.volume.knob;
                     // If muted, assume 0 for volume to visualize the muted state in the slider as well. Don't actually change the volume, though, so when un-muted, the slider simply goes back to its former value.
                     var volume = video.muted && mutedChanged ? 0 : video.volume;
                     var barSize = controls.volume.bar.getSize().y;
                     var offset = barSize - volume * barSize;
-                    knob.setStyle('top', offset + knob.top);
+                    knob.setStyle('top', offset + controls.volume.slider.offset);
                 }
             };
             
@@ -1130,11 +1137,6 @@ var Moovie = function (videos, options) {
             else if (this._wrapper.mozRequestFullScreen) { this._wrapper.mozRequestFullScreen(); }
             else if (this._wrapper.webkitRequestFullScreen) { this._wrapper.webkitRequestFullScreen(); }
             else if (this._wrapper.msRequestFullscreen) { this._wrapper.msRequestFullscreen(); }
-            
-            // custom event hooks WILL be added later. But for now, I just want to 
-            // put Moovie into a more or less "working" prototype.
-            //this.fireEvent('fullscreenchange', { target: this._wrapper });
-            
             this._fullscreen = true;
         },
         
@@ -1144,7 +1146,6 @@ var Moovie = function (videos, options) {
             else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
             else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen(); }
             else if (document.msExitFullscreen) { document.msExitFullscreen(); }
-            // this.fireEvent('fullscreenchange', { target: this._wrapper });
             this._fullscreen = false;
         },
         
@@ -1233,6 +1234,3 @@ Moovie.registerCaptions = function (videoid, tracksrc, tracklang) {
     captions[tracklang] = reply;
     this.captions[videoid] = captions;
 };
-
-// LOC: 1165
-// LOC: 1114
