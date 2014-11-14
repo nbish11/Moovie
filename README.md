@@ -66,6 +66,14 @@ Demo
 ----
 See: http://colinaarts.com/code/moovie/
 
+Testing
+-------
+Because Moovie was created without tests, all pull requests and commits just 
+have to pass JSLint for the time being. The test suite Moovie has been set up 
+to use however, is Jasmine.
+
+To run the Jasmine test suite and JSLint, type ```npm test``` at the command line.
+
 Contributers
 ------------
 * [Nathan Bishop](https://github.com/nbish11)
