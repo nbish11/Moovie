@@ -1,6 +1,7 @@
 {
     "curly": true,
     "eqeqeq": true,
+    "browser": true,
     "immed": true,
     "latedef": true,
     "newcap": true,
@@ -11,6 +12,20 @@
     "eqnull": true,
     "node": true,
     "es5": false,
+    "multistr": true,
+    "predef": [
+        "$",
+        "$$",
+        "typeOf",
+        "Class",
+        "Element",
+        "Events",
+        "Options",
+        "Request",
+        "Drag",
+        "URI",
+        "Tips"
+    ],
     "globals": {
         "it": false,
         "xit": false,
@@ -19,7 +34,6 @@
         "beforeEach": false,
         "afterEach": false,
         "expect": false,
-        "spyOn": false,
-        "VendorTestFunction": false
+        "spyOn": false
     }
 }

@@ -21,6 +21,7 @@ provides: [Element.moovie]
 
 ...
 */
+"use strict";
 
 var Moovie = function (videos, options) {
     var Debug = new Class({
@@ -367,7 +368,7 @@ var Moovie = function (videos, options) {
             });
             
             // turn playlist into an iterator object.
-            this.playlist = new Iterator(this.options.playlist)
+            this.playlist = new Iterator(this.options.playlist);
             this.playlist.next();   // Set to first item.
             
             // turn off HTML5 native video controls
@@ -417,7 +418,7 @@ var Moovie = function (videos, options) {
             }
             
             // build player
-            this.buildPlayer(wrapper, container)
+            this.buildPlayer(wrapper, container);
         },
         
         buildPlayer: function (wrapper, container) {
@@ -646,7 +647,7 @@ var Moovie = function (videos, options) {
 
             // Methods - overlay.update
             overlay.update = function (which) {
-                if (which == 'none') {
+                if (which === 'none') {
                     this.fade('out');
                 } else {
                     this.wrapper.getChildren().hide();
@@ -667,15 +668,15 @@ var Moovie = function (videos, options) {
                     title.fade('out');
                     timer = null;
                 }, 6000);
-            }
+            };
 
             // Methods - panels.update
             panels.update = function (which) {
-                if (which == 'none' || this[which].hasClass('active')) {
+                if (which === 'none' || this[which].hasClass('active')) {
                     this.getChildren('.active').removeClass('active');
                     this.fade('out');
                 } else {
-                    this.getChildren().hide().removeClass('active');;
+                    this.getChildren().hide().removeClass('active');
                     this[which].show().addClass('active');
                     this.fade('in');
                 }
@@ -685,7 +686,7 @@ var Moovie = function (videos, options) {
             panels.playlist.play = function (action) {
                 var current = self.playlist.current();
 
-                if (action == 'previous') {
+                if (action === 'previous') {
                     if (self.playlist.hasPrevious()) {
                         current = self.playlist.previous();
                         
@@ -694,16 +695,16 @@ var Moovie = function (videos, options) {
                         self.playlist.index = self.playlist.length - 1;
                         current = self.playlist.current();
                     }
-                } else if (action == 'next') {
+                } else if (action === 'next') {
                     if (self.playlist.hasNext()) {
                         current = self.playlist.next();
                     
                     // change this to a "last video in playlist" message?
                     } else {
-                        self.playlist.rewind().next()
+                        self.playlist.rewind().next();
                         current = self.playlist.current();
                     }
-                } else if (typeOf(action) == 'number') {
+                } else if (typeOf(action) === 'number') {
                     if (action >= 0 && action < self.playlist.length - 1) {
                         self.playlist.index = action;
                         current = self.playlist.current();
@@ -728,13 +729,13 @@ var Moovie = function (videos, options) {
                 var current = panels.playlist.getElement('ol.playlist li.active');
                 var index = +current.get('data-index');
                 return { 'element': current, 'index': index };
-            }
+            };
             
             // Methods - panels.playlist.setActive
             panels.playlist.setActive = function (index) {
                 var active = panels.playlist.getActive().element.removeClass('active');
                 panels.playlist.getElement('ol.playlist li[data-index="' + index + '"]').addClass('active');
-            }
+            };
 
             // Methods - controls.play.update
             controls.play.update = function (action) {
@@ -774,12 +775,13 @@ var Moovie = function (videos, options) {
             
             // Methods - controls.volume.update
             controls.volume.update = function (action) {
-                var mutedChanged = !(muted == video.muted);
+                //var mutedChanged = !(muted === video.muted);
+                var mutedChanged = muted !== video.muted ? true : false;
                 muted = video.muted;
 
                 if (mutedChanged && !video.muted && video.volume === 0) {
                     // Un-muted with volume at 0 -- pick a sane default. This is probably the only deviation from the way the YouTube flash player handles volume control.
-                    video.volume = .5;
+                    video.volume = 0.5;
                 } else if (video.muted && video.volume !== 0 && !mutedChanged) {
                     // IF volume changed while muted, THEN un-mute
                     video.muted = false;
@@ -833,7 +835,7 @@ var Moovie = function (videos, options) {
             
             // Events - Panels (Checkbox widgets)
             panels.addEvent('click:relay(.checkbox-widget)', function (e) {
-                if (this.get('data-checked') == 'false') {
+                if (this.get('data-checked') === 'false') {
                     this.set('data-checked', 'true');
                 } else {
                     this.set('data-checked', 'false');
@@ -844,15 +846,15 @@ var Moovie = function (videos, options) {
 
                 switch (control) {
                     case 'autohideControls':
-                        options.autohideControls = checked == 'true';
+                        options.autohideControls = checked === 'true';
                         break;
 
                     case 'loop':
-                        video.loop = checked == 'true';
+                        video.loop = checked === 'true';
                         break;
 
                     case 'showCaptions':
-                        options.showCaptions = checked == 'true';
+                        options.showCaptions = checked === 'true';
                         break;
                 }
             });
@@ -1093,10 +1095,10 @@ var Moovie = function (videos, options) {
         // Parses a float value in seconds (from video.currentTime etc) to normal time format
         parseTime: function (val) {
             var rest = 0,
-            hrs = 0,
-            mins = 0,
-            secs = 0,
-            time = '';
+                hrs = 0,
+                mins = 0,
+                secs = 0,
+                time = '';
 
             hrs = (val / 3600).toInt();
             rest = val % 3600;
@@ -1104,11 +1106,14 @@ var Moovie = function (videos, options) {
             rest = rest % 60;
             secs = rest.toInt().toString();
 
-            if (secs.length == 1) {
+            if (secs.length === 1) {
                 secs = '0' + secs;
             }
             
-            if (hrs !== 0) time += hrs + ':';
+            if (hrs !== 0) {
+                time += hrs + ':';
+            }
+            
             return time + mins + ':' + secs;
         },
         
@@ -1158,9 +1163,9 @@ var Moovie = function (videos, options) {
     options = options || {};
     
     videos.each(function (el) {
-        if (typeOf(el) == 'element') {
+        if (typeOf(el) === 'element') {
             el.Moovie = new Doit(el, options);
-        } else if (typeOf(el) == 'object') {
+        } else if (typeOf(el) === 'object') {
             el.options = el.options || {};
             el.options.id = el.id || null;
             el.options.captions = Moovie.captions[el.id] || null;
