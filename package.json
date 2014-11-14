@@ -1,0 +1,38 @@
+{
+    "name": "Moovie",
+    "version": "0.5.2",
+    "description": "An advanced HTML5 video player for MooTools.",
+    "main": "grunfile.js",
+    "scripts": {
+        "test": "grunt test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/nbish11/Moovie.git"
+    },
+    "keywords": [
+        "video",
+        "html5",
+        "media",
+        "mootools",
+        "player",
+        "captions",
+        "subtitles",
+        "playlist"
+    ],
+    "author": "Colin Aarts <colin@colinaarts.com>",
+    "contributors": [{
+        "name": "Nathan Bishop",
+        "email": "nbish11@hotmail.com"
+    }],
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/nbish11/Moovie/issues"
+    },
+    "homepage": "http://colinaarts.com/code/moovie/",
+    "devDependencies": {
+        "grunt": "^0.4.5",
+        "grunt-contrib-jasmine": "^0.8.1",
+        "grunt-contrib-jshint": "^0.10.0"
+    }
+}

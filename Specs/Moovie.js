@@ -1,6 +1,6 @@
 "use strict";
 
-describe('Moovie', function () {
+describe('Moovie Test Suite', function () {
     
     it('to be defined and a function', function () {
         expect(Moovie).toBeDefined();

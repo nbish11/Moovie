@@ -3,7 +3,16 @@ author:
     - Colin Aarts
     - Nathan Bishop
 category: Media
-tags: [media, video, html5, playlist]
+tags: [
+    video,
+    html5,
+    media,
+    mootools,
+    player,
+    captions,
+    subtitles,
+    playlist
+]
 #docs: https://github.com/nbish11/Moovie/wiki
 #demo: https://github.io/nbish11/Moovie
-#current: 0.1.0
+#current: 0.5.2

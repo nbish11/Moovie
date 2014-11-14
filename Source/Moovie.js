@@ -2,11 +2,11 @@
 ---
 description: An advanced HTML5 video player for MooTools.
 
-version: 0.1.0
+version: 0.5.2
 
 license: MIT-style
 
-copyright: Copyright (c) 20120 Colin Aarts
+copyright: Copyright (c) 2010 Colin Aarts
 
 authors:
     - Colin Aarts
