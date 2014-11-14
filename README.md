@@ -1,4 +1,4 @@
-Moovie
+Moovie [![Build Status](https://travis-ci.org/nbish11/Moovie.svg)](https://travis-ci.org/nbish11/Moovie)
 ======
 This is a custom controls library for the HTML5 video element.
 
