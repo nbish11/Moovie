@@ -2,7 +2,7 @@
 ---
 description: An advanced HTML5 video player for MooTools.
 
-version: 0.5.2
+version: 0.6.2
 
 license: MIT-style
 
@@ -361,15 +361,38 @@ var Moovie = function (videos, options) {
             this.setOptions(options);
             
             // Add the current video to the playlist stack
-            this.options.playlist.unshift({
-                id: this.options.id,
-                src: this.element.src,
-                title: this.options.title
-            });
+            if (typeOf(this.options.playlist) === 'string') {
+                var data = null;
+                var request = new Request.JSON({
+                    method: 'GET',
+                    url: this.options.playlist,
+                    async: false,
+                    onSuccess: function (responseJSON) {
+                        data = responseJSON;
+                    }
+                }).send();
+                
+                data.unshift({
+                    id: this.options.id,
+                    src: this.element.src,
+                    title: this.element.title || this.options.title
+                });
+                
+                this.playlist = new Iterator(data);
+            } else {
+                // This will be removed for the "Milestone 1.0.0" release.
+                // This is only here for backwards compatibility.
+                this.options.playlist.unshift({
+                    id: this.options.id,
+                    src: this.element.src,
+                    title: this.options.title
+                });
+                
+                this.playlist = new Iterator(this.options.playlist);
+            }
             
-            // turn playlist into an iterator object.
-            this.playlist = new Iterator(this.options.playlist);
-            this.playlist.next();   // Set to first item.
+            // Set to first item.
+            this.playlist.next();
             
             // turn off HTML5 native video controls
             this.element.controls = false;
