@@ -25,6 +25,16 @@ following properties: "src", "kind", "srclang",
 ]
 ```
 
+## Source
+The "src" property can accept a single string. Used if you
+only ever want to provide a single video type.
+
+**Example:**
+
+```
+"src": "assets/videos/avatar.mp4"
+```
+
 ## Sources
 The "sources" property can accept an array of 
 strings.
@@ -95,19 +105,6 @@ A summary or synopsis of the video.
 "description": "Avatar is about aliens..."
 ```
 
-## Active
-The "active" property **must** only be used by 1 item 
-in the playlist, and is used to provide information for 
-the currently loaded ```<video>``` tag. The "sources", 
-"tracks" and "poster" attributes can be ommited for that 
-item.
-
-**Example:**
-
-```
-"active": true
-```
-
 # Examples
 
 ## Example 1
@@ -124,9 +121,16 @@ A playlist for all the Resident Evil trailers.
     <script>
         
         var video = {
+            // video specific options
             video: $$('video')[0],
             autohideControls: true,
             debug: true,
+            
+            // playlist options to match <video> tag
+            title: "Resident Evil",
+            year: 2002,
+            
+            // external playlist
             playlist: "resident-evil-trailers-playlist.json"
         };
         
@@ -140,11 +144,6 @@ A playlist for all the Resident Evil trailers.
 
 ```
 [
-    {
-        "title": "Resident Evil",
-        "year": 2002,
-        "active": true
-    },
     {
         "title": "Resident Evil: Apocalypse",
         "year": 2004,
