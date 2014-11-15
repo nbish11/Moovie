@@ -74,26 +74,16 @@
         
         <script>
             window.addEvent('domready', function () {
-                if ($$('video').length && $$('video')[0].play) {
-                    var video = {
-                        'video' : $$('video')[0],
-                        'id' : 'avatar',
-                        'options' : {
-                        'debug' : true,
-                        'playlist' : [
-                            {
-                                'id': 'alice',
-                                'src': 'http://colinaarts.com/assets/alice.ogv'
-                            }, {
-                                'id': 'shrek',
-                                'src': 'http://colinaarts.com/assets/shrek.ogv',
-                                'title': '<cite>Shrek Forever After</cite> theatrical trailer'
-                            }
-                        ]
-                        }
-                    };
-                    Moovie([video]);
-                }
+                var video = {
+                    video: $$('video')[0],
+                    id: 'avatar',   // id for the playlist item only
+                    options: {
+                        debug: true,
+                        playlist: 'http://localhost/Moovie/playlist.json'
+                    }
+                };
+                
+                Moovie([video]);
             });
         </script>
     </body>
