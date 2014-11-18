@@ -1,7 +1,6 @@
 {
     "curly": true,
     "eqeqeq": true,
-    "browser": true,
     "immed": true,
     "latedef": true,
     "newcap": true,
@@ -12,19 +11,8 @@
     "eqnull": true,
     "node": true,
     "multistr": true,
-    "predef": [
-        "$",
-        "$$",
-        "typeOf",
-        "Class",
-        "Element",
-        "Events",
-        "Options",
-        "Request",
-        "Drag",
-        "URI",
-        "Tips"
-    ],
+    "browser": true,
+    "mootools": true,
     "globals": {
         "it": false,
         "xit": false,
