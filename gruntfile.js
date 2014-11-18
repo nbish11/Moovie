@@ -16,6 +16,10 @@ module.exports = function (grunt) {
         jasmine: {
             src: 'Source/*.js',
             options: {
+                vendor: [
+                    'Lib/mootools-1.5.1/mootools-core-min-full-nocompat.js',
+                    'Lib/mootools-1.5.1/mootools-more-min-full-nocompat-nolang.js'
+                ],
                 specs: 'Specs/*.js'
             }
         }
