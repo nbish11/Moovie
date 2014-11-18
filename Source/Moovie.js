@@ -1030,7 +1030,7 @@ var Moovie = function (videos, options) {
                 },
 
                 ended: function (e) {
-                    if (this.playlist.length > 1) {
+                    if (self.playlist.length > 1) {
                         panels.playlist.play('next');
                     } else {
                         controls.play.update();
