@@ -658,6 +658,9 @@ var Moovie = function (videos, options) {
             // Adjust height of panel container to account for controls bar
             panels.setStyle('height', panels.getStyle('height').toInt() - controls.getStyle('height').toInt());
             
+            // set video duration
+            controls.duration.set('text', self.parseTime(video.duration));
+            
             // Fixed height for playlist...
             (function () {
                 var el      = panels.playlist.getChildren('div:nth-child(2)')[0],
