@@ -930,11 +930,10 @@ var Moovie = function (videos, options) {
                 });
             }
             
-            // Events - controls.progress.bar
-            controls.progress.bar.addEvent('mousemove', function (e) {
-                //controls.progress.time.update(e.page.x, false);
+            // Events - controls.progress
+            controls.progress.addEvent('mousemove', function (e) {
                 controls.progress.time.fade('show');
-                var barX = controls.progress.bar.getPosition().x;
+                var barX = controls.progress.getPosition().x;
                 controls.progress.time.setStyle('left', e.page.x - barX + 'px');
                 controls.progress.time.getFirst().set('text', self.parseTime(self.locToTime(e.page.x, controls, video)));
             });
