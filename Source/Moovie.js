@@ -281,60 +281,6 @@ var Moovie = function (videos, options) {
         }
     });
     
-    var MediaSlider = new Class({
-        Implements: [Events, Options],
-        options: {
-            mode: 'horizontal'    // horizontal:x, vertical:y
-        },
-        
-        initialize: function (knob, bar, options) {
-            this.knob = document.id(knob);
-            this.bar = document.id(bar);
-            this.setOptions(options);
-            this.mode = this.options.mode === 'vertical' ? 'y' : 'x';
-            this.dragging = false;
-            this.offset = this.getOffset();
-            this.drag = new Drag(this.knob, {
-                snap: 0,
-                modifiers: this.mode === 'y' ? { x: false } : { y: false },
-                onStart: this.start.bind(this),
-                onCancel: this.cancel.bind(this),
-                onComplete: this.complete.bind(this),
-                onDrag: this.drag.bind(this)
-            });
-        },
-        
-        start: function (el, e) {
-            this.dragging = true;
-        },
-        
-        cancel: function (el, e) {
-            this.dragging = true;
-        },
-        
-        complete: function (el, e) {
-            this.dragging = false;
-            this.fireEvent('complete', [e]);
-        },
-        
-        drag: function (el, e) {
-            var xy = this.bar.getPosition()[this.mode];
-            var wh = this.bar.getSize()[this.mode];
-            var style = this.mode === 'y' ? 'top' : 'left';
-            var page = e.page[this.mode];
-            
-            if (page < xy) { this.knob.setStyle(style, this.offset); }
-            else if (page > xy + wh) { this.knob.setStyle(style, this.offset + wh); }
-            
-            this.dragging = true;
-            this.fireEvent('drag', [e]);
-        },
-        
-        getOffset: function () {
-            return this.knob.getStyle(this.mode === 'y' ? 'top' : 'left').toInt();
-        }
-    });
-    
     // The main function, which handles one <video> at a time.
     // <http://www.urbandictionary.com/define.php?term=Doit&defid=3379319>
     var Doit = new Class({
