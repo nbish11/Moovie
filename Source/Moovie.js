@@ -390,6 +390,13 @@ var Moovie = function (videos, options) {
             this.buildPlayer(wrapper, container);
         },
         
+        buildCaptions: function () {
+            this.captions = new Element('div.captions');
+            this.captions.caption = new Element('p');
+            this.captions.grab(this.captions.caption);
+            this.captions.hide();
+        },
+        
         buildTitle: function () {
             this.title = new Element('div.title[text=' + this.options.title + ']');
             this.title.set('tween', { duration: 2000 });
@@ -429,12 +436,8 @@ var Moovie = function (videos, options) {
                 muted = this._muted,
                 self = this;
             
-            // Captions ----------------------------------------------------------------
-            var captions        = new Element('div.captions');
-            captions.caption    = new Element('p');
-            
-            captions.grab(captions.caption);
-            captions.hide();
+            // build captions
+            this.buildCaptions();
 
             // Overlay -----------------------------------------------------------------
             var overlay         = new Element('div.overlay');
@@ -599,7 +602,7 @@ var Moovie = function (videos, options) {
             controls.set('tween', {duration: 150});
             
             // Inject and do some post-processing --------------------------------------
-            wrapper.adopt(captions, overlay, self.title, panels, controls);
+            wrapper.adopt(this.captions, overlay, this.title, panels, controls);
 
             // Adjust height of panel container to account for controls bar
             panels.setStyle('height', panels.getStyle('height').toInt() - controls.getStyle('height').toInt());
@@ -1012,12 +1015,12 @@ var Moovie = function (videos, options) {
                     // Captions
                     var found = false;
                     
-                    var ref = Moovie.captions[self.playlist.current().id];
+                    var ref = Moovie.captionsList[self.playlist.current().id];
                     if (ref && options.showCaptions) {
                         ref[options.captionLang].each(function (caption) {
                             if (video.currentTime >= caption.start && video.currentTime <= caption.end) {
-                                captions.caption.set('html', caption.text);
-                                captions.show();
+                                self.captions.caption.set('html', caption.text);
+                                self.captions.show();
                                 found = true;
                             }
                         });
@@ -1025,8 +1028,8 @@ var Moovie = function (videos, options) {
                     
 
                     if ( ! found) {
-                        captions.caption.set('html', '');
-                        captions.hide();
+                        self.captions.caption.set('html', '');
+                        self.captions.hide();
                     }
                 },
 
@@ -1128,14 +1131,14 @@ var Moovie = function (videos, options) {
         } else if (typeOf(el) === 'object') {
             el.options = el.options || {};
             el.options.id = el.id || null;
-            el.options.captions = Moovie.captions[el.id] || null;
+            el.options.captions = Moovie.captionsList[el.id] || null;
             el.video.Moovie = new Doit(el.video, Object.merge(options, el.options));
         }
     });
 };
 
 // Public static properties
-Moovie.captions = {};
+Moovie.captionsList = {};
 
 // You can add additional language definitions here
 Moovie.languages = {
@@ -1197,5 +1200,5 @@ Moovie.registerCaptions = function (videoid, tracksrc, tracklang) {
     
     var captions = {};
     captions[tracklang] = reply;
-    this.captions[videoid] = captions;
+    this.captionsList[videoid] = captions;
 };
