@@ -18,7 +18,8 @@ Use
 This is just a quick summary, for a full depth informative guide please see the Moovie homepage: http://colinaarts.com/code/moovie/
 
 For multiple videos with a base set of options:
-```php
+
+```
 var videos  = $$('video'),
     options = { debug: true, autohideControls: false };
 
@@ -26,37 +27,43 @@ Moovie(videos, options);
 ```
 
 For multiple videos with custom and base options:
-```php
+
+```
 var options = { autohideControls: false }, // Generic options
     videos  = [
-      { video: $('video-1'), id: 'my-video', options: { debug: true } },
-      { video: $('video-2') },
-      { video: $('video-3'), options: { autohideControls: true } } // overrides the generic option
+        { video: $('video-1'), id: 'my-video', options: { debug: true } },
+        { video: $('video-2') },
+        { video: $('video-3'), options: { autohideControls: true } } // overrides the generic option
     ];
-    
+
 Moovie(videos, options);
 ```
 
 Single video with playlist:
-```php
+
+```
 var video = {
-  video   : $$('video')[0],
-  id      : 'avatar',
-  options : {
-    'debug'    : true,
-    'playlist' : [
-      {
-        'id'    : 'alice',
-        'src'   : 'http://videos/alice.ogv'
-              
-      },
-      {
-        'id'    : 'shrek',
-        'src'   : 'http://videos/shrek.ogv',
-        'title' : '<cite>Shrek Forever After</cite> theatrical trailer'
-      }
-    ]
-  }
+    "video": $$('video')[0],
+    "id": "avatar",
+
+    "options": {
+        "debug": true,
+        "playlist": [
+            {
+                "id": "alice",
+                "src": "http://videos/alice.ogv",
+                "tracks": [{
+                    "src": "http://localhost/assets/alice-en-subs.srt",
+                    "kind": "moovie"    // subtitles
+                }]
+            },
+            {
+                "id": "shrek",
+                "src": "http://videos/shrek.ogv",
+                "title": "<cite>Shrek Forever After</cite> theatrical trailer"
+            }
+        ]
+    }
 };
 
 Moovie([video]);  // Must be passed in as array.
