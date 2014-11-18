@@ -791,22 +791,6 @@ var Moovie = function (videos, options) {
                 }
             };
             
-            // Methods - controls.progress.time.update
-            controls.progress.time.update = function (offset, knob) {
-                controls.progress.time.fade('show');
-                var barX = controls.progress.bar.getPosition().x;
-                
-                if ( ! knob) {
-                    controls.progress.time.setStyle('left', offset - barX + 'px');
-                } else {
-                    var sliderX = controls.progress.knob.getPosition().x;
-                    controls.progress.time.setStyle('left', sliderX - barX - controls.progress.slider.offset + 'px');
-                    offset = sliderX - controls.progress.slider.offset;
-                }
-                
-                this.getFirst().set('text', self.parseTime(self.locToTime(offset, controls, video)));
-            };
-            
             // Methods - controls.volume.update
             controls.volume.update = function (action) {
                 //var mutedChanged = !(muted === video.muted);
@@ -932,14 +916,25 @@ var Moovie = function (videos, options) {
             
             // Events - controls.progress
             controls.progress.addEvent('mousemove', function (e) {
-                controls.progress.time.fade('show');
-                var barX = controls.progress.getPosition().x;
-                controls.progress.time.setStyle('left', e.page.x - barX + 'px');
-                controls.progress.time.getFirst().set('text', self.parseTime(self.locToTime(e.page.x, controls, video)));
+                if ( ! e.target.hasClass('knob')) {
+                    controls.progress.time.fade('show');
+                    var barX = controls.progress.getPosition().x;
+                    controls.progress.time.setStyle('left', e.page.x - barX + 'px');
+                    controls.progress.time.getFirst().set('text', self.parseTime(self.locToTime(e.page.x, controls, video)));
+                }
             });
             
-            // Events - controls.progress.slider
-            controls.progress.knob.addEvent('mouseenter', function (e) { controls.progress.time.update(e.page.x, true); });
+            // Events - controls.progress.knob
+            controls.progress.knob.addEvent('mouseenter', function (e) {
+                var knobOffset = -controls.progress.slider.options.offset;
+                var barX = controls.progress.bar.getPosition().x;
+                var sliderX = controls.progress.knob.getPosition().x;
+                var offset = sliderX - knobOffset;
+                
+                controls.progress.time.fade('show');
+                controls.progress.time.setStyle('left', sliderX - barX - knobOffset + 'px');
+                controls.progress.time.getFirst().set('text', self.parseTime(self.locToTime(offset, controls, video)));
+            });
             
             // Events - controls.progress.bar
             controls.progress.bar.addEvent('mouseleave', function (e) {
