@@ -620,7 +620,7 @@ var Moovie = function (videos, options) {
             controls.volume.bar     = new Element('div.bar');
             controls.volume.knob    = new Element('div.knob');
             
-            controls.volume.popup.adopt(controls.volume.bar, controls.volume.knob);
+            controls.volume.popup.adopt(controls.volume.bar.grab(controls.volume.knob));
             controls.volume.wrapper.adopt(controls.volume.mute, controls.volume.popup);
             controls.volume.grab(controls.volume.wrapper);
             
@@ -689,17 +689,21 @@ var Moovie = function (videos, options) {
                     }
                 }
             );
-
+            
             // make volume draggable
-            controls.volume.slider = new MediaSlider(controls.volume.knob,
-                controls.volume.bar, {
+            controls.volume.slider = new Slider(controls.volume.bar,
+                controls.volume.knob, {
+                    snap: 0,
                     mode: 'vertical',
-                    onDrag: function (e) {
-                        video.volume = self.locToVolume(e.page.y, controls);
+                    steps: 100,
+                    initialStep: (1 - video.volume) * 100,
+                    offset: -controls.progress.knob.getStyle('left').toInt(),
+                    onChange: function (step) {
+                        video.volume = 1 - step /  this.steps;
                     }
                 }
             );
-
+            
             // Methods - overlay.update
             overlay.update = function (which) {
                 if (which === 'none') {
@@ -814,13 +818,14 @@ var Moovie = function (videos, options) {
                     controls.volume.mute.removeClass('muted');
                 }
                 
-                if ( ! controls.volume.slider.dragging) {
+                if ( ! controls.volume.slider.isDragging) {
                     var knob = controls.volume.knob;
                     // If muted, assume 0 for volume to visualize the muted state in the slider as well. Don't actually change the volume, though, so when un-muted, the slider simply goes back to its former value.
                     var volume = video.muted && mutedChanged ? 0 : video.volume;
                     var barSize = controls.volume.bar.getSize().y;
                     var offset = barSize - volume * barSize;
-                    knob.setStyle('top', offset + controls.volume.slider.offset);
+                    console.log(controls.volume.slider.options.offset);
+                    knob.setStyle('top', offset + -controls.volume.slider.options.offset);
                 }
             };
             
@@ -937,7 +942,7 @@ var Moovie = function (videos, options) {
             });
             
             // Events - controls.progress.bar
-            controls.progress.bar.addEvent('mouseleave', function (e) {
+            controls.progress.addEvent('mouseleave', function (e) {
                 controls.progress.time.fade('hide');
             });
             
@@ -959,11 +964,6 @@ var Moovie = function (videos, options) {
             // Events - controls.volume.hide
             controls.volume.addEvent('mouseleave', function (e) {
                 controls.volume.popup.fade('out');
-            });
-            
-            // Events - controls.volume.setVolume
-            controls.volume.bar.addEvent('click', function (e) {
-                video.volume = self.locToVolume(e.page.y, controls);
             });
             
             // Events - controls.more.show
@@ -1149,16 +1149,6 @@ var Moovie = function (videos, options) {
             var offsetPc = offsetPx / barW * 100;
             var time = (video.duration || 0) / 100 * offsetPc;
             return time;
-        },
-        
-        // Calculates offset for volume bar slider based on page location
-        locToVolume: function (val, controls) {
-            var barY = controls.volume.bar.getPosition().y;
-            var barH = controls.volume.bar.getSize().y;
-            var offsetPx = val - barY;
-            var offsetPc = offsetPx / barH * 100;
-            var volume = 1 - (1 / 100 * offsetPc).limit(0, 1);
-            return volume;
         },
         
         requestFullScreen: function () {
