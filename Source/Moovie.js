@@ -757,8 +757,9 @@ var Moovie = function (videos, options) {
                 video.load();
                 video.play();
                 
-                self.title.setText(current.title + '').show();
-                panels.info.getElement('dt.title + dd').set('html', (current.title || new URI(current.src).get('file')));
+                var foundTitle = current.title || new URI(current.src).get('file');
+                self.title.setText(foundTitle).show();
+                panels.info.getElement('dt.title + dd').set('html', foundTitle);
                 panels.info.getElement('dt.url + dd').set('html', current.src);
             };
             
