@@ -738,7 +738,7 @@ var Moovie = function (videos, options) {
             controls.progress.update = function (e) {
                 var slider = controls.progress.slider;
                 if ( ! slider.isDragging) {
-                    var position = e.target.currentTime / e.target.duration * slider.range
+                    var position = e.target.currentTime / e.target.duration * slider.range;
                     position = slider.toPosition(position);
                     slider.knob.setStyle(slider.property, position);
                 }
