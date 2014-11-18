@@ -2,7 +2,7 @@
 ---
 description: An advanced HTML5 video player for MooTools.
 
-version: 0.6.2
+version: 0.7.2
 
 license: MIT-style
 
@@ -1066,6 +1066,7 @@ var Moovie = function (videos, options) {
         },
         
         // Parses a float value in seconds (from video.currentTime etc) to normal time format
+        /** @deprecated */
         parseTime: function (val) {
             var rest = 0,
                 hrs = 0,
@@ -1091,6 +1092,7 @@ var Moovie = function (videos, options) {
         },
         
         // Calculates offset for progress bar slider based on page location
+        /** @deprecated */
         locToTime: function (val, controls, video) {
             var barX = controls.progress.bar.getPosition().x;
             var barW = controls.progress.bar.getSize().x;
@@ -1100,6 +1102,7 @@ var Moovie = function (videos, options) {
             return time;
         },
         
+        /** @deprecated */
         requestFullScreen: function () {
             if (this._wrapper.requestFullscreen) { this._wrapper.requestFullscreen(); }
             else if (this._wrapper.mozRequestFullScreen) { this._wrapper.mozRequestFullScreen(); }
@@ -1109,6 +1112,7 @@ var Moovie = function (videos, options) {
         },
         
         // I hate using exitFullscreen(), cancelFullscreen sounds much nicer.
+        /** @deprecated */
         cancelFullScreen: function () {
             if (document.exitFullscreen) { document.exitFullscreen(); }
             else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
@@ -1138,6 +1142,7 @@ var Moovie = function (videos, options) {
 };
 
 // Public static properties
+/** @deprecated */
 Moovie.captionsList = {};
 
 // You can add additional language definitions here
@@ -1146,6 +1151,7 @@ Moovie.languages = {
 };
 
 // register and load captions
+/** @deprecated */
 Moovie.registerCaptions = function (videoid, tracksrc, tracklang) {
     tracklang = tracklang || 'en';
     
