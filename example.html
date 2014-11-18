@@ -18,9 +18,6 @@
         <!-- Moovie library -->
         <script type="text/javascript" src="Source/Moovie.js"></script>
         
-        <!-- Moovie: register captions -->
-        <script>// Moovie.registerCaptions('avatar', 'http://localhost/moovie/Avatar.srt');</script>
-        
         <style>
             article,aside,figure,footer,header,nav,section{display:block}
             html{background:url(http://colinaarts.com/assets/body-bg.png) fixed #FFF;color:#444;cursor:default;font:76%/1.8 'Lucida Sans Unicode',Arial,Helvetica,sans-serif;margin:0;overflow-y:scroll;padding:0}
@@ -69,6 +66,7 @@
     
     <body>
         <video poster="http://colinaarts.com/assets/avatar.png" src="http://colinaarts.com/assets/avatar.ogv">
+            <track src="http://localhost/moovie/Avatar.srt" srclang="en" kind="moovie" label="English">
             <p>Your browser does not support the HTML 5 video element.</p>
         </video>
         
