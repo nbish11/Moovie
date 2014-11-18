@@ -444,6 +444,38 @@ var Moovie = function (videos, options) {
             this.buildPlayer(wrapper, container);
         },
         
+        buildTitle: function () {
+            this.title = new Element('div.title[text=' + this.options.title + ']');
+            this.title.set('tween', { duration: 2000 });
+            this.title.fade('out');
+            
+            this.title.setText = function (text) {
+                this.set('text', text);
+                return this;
+            };
+            
+            var originalShow = this.title.show();
+            this.title.show = function () {
+                this.fade('in');
+                
+                // fade out
+                var timer = setTimeout(function () {
+                    this.fade('out');
+                    timer = null;
+                }.bind(this), 6000);
+                
+                return this;
+            };
+            
+            var originalHide = this.title.hide;
+            this.title.hide = function () {
+                this.fade('out');
+                return this;
+            };
+            
+            return this;
+        },
+        
         buildPlayer: function (wrapper, container) {
             // references - so I don't have to bind
             var video = this.element,
@@ -471,12 +503,9 @@ var Moovie = function (videos, options) {
             
             overlay.set('tween', {duration: 50});
             overlay.fade('hide');
-
-            // Title -------------------------------------------------------------------
-            var title           = new Element('div.title[text='+options.title+']');
             
-            title.set('tween', {duration: 2000});
-            title.fade('hide');
+            // build title and hide
+            this.buildTitle();
 
             // Panels ------------------------------------------------------------------
             var panels          = new Element('div.panels');
@@ -624,7 +653,7 @@ var Moovie = function (videos, options) {
             controls.set('tween', {duration: 150});
             
             // Inject and do some post-processing --------------------------------------
-            wrapper.adopt(captions, overlay, title, panels, controls);
+            wrapper.adopt(captions, overlay, self.title, panels, controls);
 
             // Adjust height of panel container to account for controls bar
             panels.setStyle('height', panels.getStyle('height').toInt() - controls.getStyle('height').toInt());
@@ -679,20 +708,6 @@ var Moovie = function (videos, options) {
                 }
             };
 
-            // Methods - title.show
-            title.show = function () {
-                var index = panels.playlist.getActive().index;
-                var text = options.playlist[index].title;
-                
-                title.set('html', (index + 1).toString() + '. ' + text);
-                title.fade('in');
-                
-                var timer = setTimeout(function () {
-                    title.fade('out');
-                    timer = null;
-                }, 6000);
-            };
-
             // Methods - panels.update
             panels.update = function (which) {
                 if (which === 'none' || this[which].hasClass('active')) {
@@ -737,12 +752,12 @@ var Moovie = function (videos, options) {
                 panels.playlist.setActive(self.playlist.index);
 
                 video.src = current.src;
-                video.poster = current.poster;
+                if (current.poster) {video.poster = current.poster;}
                 
                 video.load();
                 video.play();
-                title.show();
-
+                
+                self.title.setText(current.title + '').show();
                 panels.info.getElement('dt.title + dd').set('html', (current.title || new URI(current.src).get('file')));
                 panels.info.getElement('dt.url + dd').set('html', current.src);
             };
@@ -849,7 +864,7 @@ var Moovie = function (videos, options) {
             // Events - Overlay
             $$(overlay.play, overlay.replay).addEvent('click', function (e) {
                 video.play();
-                title.show();
+                self.title.show();
             });
 
             $$(overlay.paused).addEvent('click', function (e) {
