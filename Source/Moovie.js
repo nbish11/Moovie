@@ -931,12 +931,6 @@ var Moovie = function (videos, options) {
             }
             
             // Events - controls.progress.bar
-          //  controls.progress.bar.addEvent('click', function (e) {
-          //      video.currentTime = self.locToTime(e.page.x, controls, video);
-          //      if (video.paused) { video.play(); }
-          //  });
-            
-            // Events - controls.progress.bar
             controls.progress.bar.addEvent('mousemove', function (e) {
                 //controls.progress.time.update(e.page.x, false);
                 controls.progress.time.fade('show');
