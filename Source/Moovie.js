@@ -928,20 +928,22 @@ var Moovie = function (videos, options) {
             }
             
             // Events - controls.progress.bar
-            controls.progress.bar.addEvent('click', function (e) {
-                video.currentTime = self.locToTime(e.page.x, controls, video);
-                if (video.paused) { video.play(); }
-            });
+          //  controls.progress.bar.addEvent('click', function (e) {
+          //      video.currentTime = self.locToTime(e.page.x, controls, video);
+          //      if (video.paused) { video.play(); }
+          //  });
             
             // Events - controls.progress.bar
             controls.progress.bar.addEvent('mousemove', function (e) {
-                controls.progress.time.update(e.page.x, false);
+                //controls.progress.time.update(e.page.x, false);
+                controls.progress.time.fade('show');
+                var barX = controls.progress.bar.getPosition().x;
+                controls.progress.time.setStyle('left', e.page.x - barX + 'px');
+                controls.progress.time.getFirst().set('text', self.parseTime(self.locToTime(e.page.x, controls, video)));
             });
             
             // Events - controls.progress.slider
-            controls.progress.knob.addEvent('mouseenter', function (e) {
-                controls.progress.time.update(e.page.x, true);
-            });
+            controls.progress.knob.addEvent('mouseenter', function (e) { controls.progress.time.update(e.page.x, true); });
             
             // Events - controls.progress.bar
             controls.progress.bar.addEvent('mouseleave', function (e) {
