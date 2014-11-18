@@ -762,16 +762,9 @@ var Moovie = function (videos, options) {
                 panels.info.getElement('dt.url + dd').set('html', current.src);
             };
             
-            // Methods - panels.playlist.getActive
-            panels.playlist.getActive = function () {
-                var current = panels.playlist.getElement('ol.playlist li.active');
-                var index = +current.get('data-index');
-                return { 'element': current, 'index': index };
-            };
-            
             // Methods - panels.playlist.setActive
             panels.playlist.setActive = function (index) {
-                var active = panels.playlist.getActive().element.removeClass('active');
+                panels.playlist.getElement('ol.playlist li.active').removeClass('active');
                 panels.playlist.getElement('ol.playlist li[data-index="' + index + '"]').addClass('active');
             };
 
