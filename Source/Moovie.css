@@ -400,11 +400,11 @@
 }
 
 .moovie .controls > .wrapper .volume .wrapper .popup .bar {
-    background: none repeat scroll 0 0 #FFFFFF;
+    background: none repeat scroll 0 0 rgba(255, 255, 255, 0.7);
     height: 100%;
     margin: 0 auto;
-    opacity: 0.7;
     width: 8px;
+    position: relative;
 }
 
 .moovie .controls > .wrapper .volume .wrapper .popup .knob {
@@ -414,8 +414,8 @@
     height: 10px;
     left: 50%;
     margin: 0 0 0 -7px;
-    position: absolute;
-    top: 6px;
+    position: relative;
+    top: -6px;
     width: 10px;
 }
 
