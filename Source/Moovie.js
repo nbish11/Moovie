@@ -291,14 +291,12 @@ var Moovie = function (videos, options) {
             autohideControls: true,
             title: null,
             playlist: [],
-            captions: null,
-            showCaptions: true,
-            captionLang: 'en'
+            captions: true
         },
         
         initialize: function (element, options) {
             // reference to <video> tag
-            this.element = document.id(element);
+            this.element = this.video = document.id(element);
             
             // set default title in options
             this.options.title = new URI(this.element.src).get('file');
@@ -343,6 +341,9 @@ var Moovie = function (videos, options) {
             // turn off HTML5 native video controls
             this.element.controls = false;
             
+            // load tracks
+            this.initTracks();
+            
             // Add HTML 5 media events to Element.NativeEvents, if needed.
             if ( ! Element.NativeEvents.timeupdate) {
                 Object.merge(Element.NativeEvents, {
@@ -371,6 +372,55 @@ var Moovie = function (videos, options) {
         },
         
         TrackInstances: true,
+        
+        initTracks: function () {
+            var parse = function (data) {
+                var cues = [];
+                var toSeconds = function (t) {
+                    t = t.split(/[:,]/);
+                    
+                    return parseFloat(t[0], 10) * 3600 +
+                           parseFloat(t[1], 10) * 60 +
+                           parseFloat(t[2], 10) +
+                           parseFloat(t[3], 10) / 1000;
+                };
+                
+                // Two newlines ("\n\n") in a row is considered the cue break.
+                data = data.replace(/\r?\n/gm, '\n').split('\n\n');
+                
+                data.each(function (cue) {
+                    cue = cue.split('\n');
+                    
+                    var id = cue.shift(),
+                        time = cue.shift().split(/[\t ]*-->[\t ]*/),
+                        
+                        // for if the text contains multiple lines
+                        text = cue.join('<br>');
+                        
+                    cues.push({
+                        id: id,
+                        start: toSeconds(time[0]),
+                        end: toSeconds(time[1]),
+                        text: text
+                    });
+                });
+                
+                return cues;
+            };
+            
+            this.video.getChildren('track').each(function (track) {
+                if (track.get('src') && track.get('kind') === 'moovie') {
+                    var request = new Request({
+                        method: 'GET',
+                        url: track.get('src'),
+                        async: false,
+                        onSuccess: function (response) {
+                            track.cues = parse(response);
+                        }
+                    }).send();
+                }
+            });
+        },
         
         build: function () {
             // create some wrappers
@@ -710,6 +760,25 @@ var Moovie = function (videos, options) {
                 video.src = current.src;
                 if (current.poster) {video.poster = current.poster;}
                 
+                // remove old <track> tags
+                self.video.getChildren('track').destroy();
+                
+                // add new <track> tags
+                if (current.tracks) {
+                    current.tracks.each(function (track, index) {
+                        if (typeOf(track) === 'object') {
+                            self.video.grab(new Element('track', {
+                                src: track.src,
+                                srclang: track.srclang || 'en',
+                                kind: 'moovie',
+                                label: track.label  // intentional return of "undefined"
+                            }));
+                        }
+                    });
+                    
+                    self.initTracks();
+                }
+                
                 video.load();
                 video.play();
                 
@@ -1014,18 +1083,18 @@ var Moovie = function (videos, options) {
 
                     // Captions
                     var found = false;
+                    var track = self.video.getFirst('track');
                     
-                    var ref = Moovie.captionsList[self.playlist.current().id];
-                    if (ref && options.showCaptions) {
-                        ref[options.captionLang].each(function (caption) {
-                            if (video.currentTime >= caption.start && video.currentTime <= caption.end) {
-                                self.captions.caption.set('html', caption.text);
+                    if (track && track.cues && self.options.captions) {
+                        track.cues.each(function (cue) {
+                            if (self.video.currentTime >= cue.start &&
+                                self.video.currentTime <= cue.end) {
+                                self.captions.caption.set('html', cue.text);
                                 self.captions.show();
                                 found = true;
                             }
                         });
                     }
-                    
 
                     if ( ! found) {
                         self.captions.caption.set('html', '');
@@ -1135,76 +1204,7 @@ var Moovie = function (videos, options) {
         } else if (typeOf(el) === 'object') {
             el.options = el.options || {};
             el.options.id = el.id || null;
-            el.options.captions = Moovie.captionsList[el.id] || null;
             el.video.Moovie = new Doit(el.video, Object.merge(options, el.options));
         }
     });
-};
-
-// Public static properties
-/** @deprecated */
-Moovie.captionsList = {};
-
-// You can add additional language definitions here
-Moovie.languages = {
-    'en': 'English'
-};
-
-// register and load captions
-/** @deprecated */
-Moovie.registerCaptions = function (videoid, tracksrc, tracklang) {
-    tracklang = tracklang || 'en';
-    
-    var parser = function (data) {
-        var cues = [];
-        
-        // return an srt formated time fo seconds
-        var toSeconds = function (t) {
-            t = t.split(/[:,]/);
-            return parseFloat(t[0], 10) * 3600 +
-                parseFloat(t[1], 10) * 60 +
-                parseFloat(t[2], 10) +
-                parseFloat(t[3], 10) / 1000;
-        };
-        
-        // Replace all newline characters with "\n" then split on
-        // every occurrence of "\n\n"; aka each cue.
-        data = data.replace(/\r?\n/gm, '\n').split('\n\n');
-        
-        data.forEach(function (cue) {
-            cue = cue.split('\n');
-            
-            var id = cue.shift(),
-                time = cue.shift().split(/[\t ]*-->[\t ]*/),
-                
-                // for if the text contains multiple lines
-                text = cue.join('<br />');
-                
-            cues.push({
-                id: id,
-                start: toSeconds(time[0]),
-                end: toSeconds(time[1]),
-                text: text
-            });
-        });
-        
-        return cues;
-    };
-    
-    // an array of cues, each one is an object with the
-    // following: id, start, end, text
-    var reply = [];
-    
-    var request = new Request({
-        method: 'GET',
-        url: tracksrc,
-        async: false,
-        onSuccess: function (responseText) {
-            reply = parser(responseText);
-        }
-    }).send();
-    
-    var captions = {};
-    captions[tracklang] = reply;
-    this.captionsList[videoid] = captions;
 };
