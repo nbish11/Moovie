@@ -673,15 +673,15 @@ var Moovie = function (videos, options) {
             })();
             
             // Make seekbar draggable
-            controls.progress.slider = new MediaSlider(controls.progress.knob,
-                controls.progress.bar, {
+            controls.progress.slider = new Slider(controls.progress.bar,
+                controls.progress.knob, {
+                    snap: 0,
                     mode: 'horizontal',
-                    onDrag: function (e) {
-                        controls.progress.time.update(true, e.page.x);
-                    },
-                    
-                    onComplete: function (e) {
-                        video.currentTime = self.locToTime(e.page.x, controls, video);
+                    steps: 100,
+                    initialStep: 0,
+                    offset: -controls.progress.knob.getStyle('left').toInt(),
+                    onChange: function (step) {
+                        video.currentTime = video.duration * step / this.steps;
                         if (video.paused) { video.play(); }
                     }
                 }
@@ -779,13 +779,12 @@ var Moovie = function (videos, options) {
             };
             
             // Methods - controls.progress.update
-            controls.progress.update = function (action) {
-                if ( ! controls.progress.slider.dragging) {
-                    var el = controls.progress.knob;
-                    var pct = video.currentTime / video.duration * 100;
-                    var width = controls.progress.bar.getSize().x;
-                    var offset = (width / 100) * pct;
-                    el.setStyle('left', offset + controls.progress.slider.offset + 'px');
+            controls.progress.update = function (e) {
+                var slider = controls.progress.slider;
+                if ( ! slider.isDragging) {
+                    var position = e.target.currentTime / e.target.duration * slider.range
+                    position = slider.toPosition(position);
+                    slider.knob.setStyle(slider.property, position);
                 }
             };
             
@@ -1062,7 +1061,7 @@ var Moovie = function (videos, options) {
 
                 timeupdate: function (e) {
                     controls.currentTime.update(video.currentTime);
-                    controls.progress.update();
+                    controls.progress.update(e);
                     
                     // seekbar > bar
                     var duration = video.duration;
