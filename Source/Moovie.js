@@ -294,12 +294,12 @@ var Moovie = function (videos, options) {
             captions: true
         },
         
-        initialize: function (element, options) {
+        initialize: function (video, options) {
             // reference to <video> tag
-            this.element = this.video = document.id(element);
+            this.video = document.id(video);
             
             // set default title in options
-            this.options.title = new URI(this.element.src).get('file');
+            this.options.title = new URI(this.video.src).get('file');
             
             // overide defaults with user provided options
             this.setOptions(options);
@@ -318,8 +318,8 @@ var Moovie = function (videos, options) {
                 
                 data.unshift({
                     id: this.options.id,
-                    src: this.element.src,
-                    title: this.element.title || this.options.title
+                    src: this.video.src,
+                    title: this.video.title || this.options.title
                 });
                 
                 this.playlist = new Iterator(data);
@@ -328,7 +328,7 @@ var Moovie = function (videos, options) {
                 // This is only here for backwards compatibility.
                 this.options.playlist.unshift({
                     id: this.options.id,
-                    src: this.element.src,
+                    src: this.video.src,
                     title: this.options.title
                 });
                 
@@ -339,7 +339,7 @@ var Moovie = function (videos, options) {
             this.playlist.next();
             
             // turn off HTML5 native video controls
-            this.element.controls = false;
+            this.video.controls = false;
             
             // load tracks
             this.initTracks();
@@ -362,10 +362,7 @@ var Moovie = function (videos, options) {
             // track. We need to do this in order to be able to provide the advanced 
             // volume control (a la YouTube's player): changing the volume can have 
             // an effect on the muted state and vice versa.
-            this._muted = this.element.muted;
-            
-            // Track fullscreen state. Defaults to false, seems reasonable enough anyway.
-            this._fullscreen = false;
+            this._muted = this.video.muted;
             
             // build Moovie
             this.build();
@@ -424,15 +421,15 @@ var Moovie = function (videos, options) {
         
         build: function () {
             // create some wrappers
-            var wrapper = new Element('div.player').wraps(this.element),
+            var wrapper = new Element('div.player').wraps(this.video),
                 container = new Element('div.moovie').wraps(wrapper);
                 
-            this._wrapper = wrapper;        // player
+            this._wrapper = this.player = wrapper;        // player
             this._container = container;    // wraps player and debug
             
             // build debug
             if (this.options.debug) {
-                this.debug = new Debug(this.element);
+                this.debug = new Debug(this.video);
                 $(this.debug).inject(container);
             }
             
@@ -481,7 +478,7 @@ var Moovie = function (videos, options) {
         
         buildPlayer: function (wrapper, container) {
             // references - so I don't have to bind
-            var video = this.element,
+            var video = this.video,
                 options = this.options,
                 muted = this._muted,
                 self = this;
@@ -548,7 +545,7 @@ var Moovie = function (videos, options) {
                     <div class="label">Loop video</div>\
                 </div>\
                 \
-                <div class="checkbox-widget" data-control="showCaptions" data-checked="' + options.showCaptions + '">\
+                <div class="checkbox-widget" data-control="captions" data-checked="' + options.captions + '">\
                     <div class="checkbox"></div>\
                     <div class="label">Show captions</div>\
                 </div>\
@@ -894,8 +891,8 @@ var Moovie = function (videos, options) {
                         video.loop = checked === 'true';
                         break;
 
-                    case 'showCaptions':
-                        options.showCaptions = checked === 'true';
+                    case 'captions':
+                        options.captions = checked === 'true';
                         break;
                 }
             });
@@ -1015,13 +1012,7 @@ var Moovie = function (videos, options) {
             });
             
             // Events - controls.playback.fullscreen
-            controls.fullscreen.addEvent('click', function (e) {
-                if (self._fullscreen) {
-                    self.cancelFullScreen();
-                } else {
-                    self.requestFullScreen();
-                }
-            });
+            controls.fullscreen.addEvent('click', this.toggleFullscreen.bind(this));
             
             video.addEvents({
                 click: function (e) {
@@ -1134,6 +1125,32 @@ var Moovie = function (videos, options) {
             });
         },
         
+        /**
+         * Sends the player into fullscreen mode or out of
+         * fullscreen mode.
+         * 
+         * @this {Doit}
+         * @return {Doit} The instance on which this method was called.
+         */
+        toggleFullscreen: function () {
+            var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement ||
+                document.mozFullScreenElement || document.msFullscreenElement;
+            
+            if (isFullscreen) {
+                if (document.exitFullscreen) { document.exitFullscreen(); }
+                else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
+                else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen(); }
+                else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+            } else {
+                if (this.player.requestFullscreen) { this.player.requestFullscreen(); }
+                else if (this.player.mozRequestFullScreen) { this.player.mozRequestFullScreen(); }
+                else if (this.player.webkitRequestFullScreen) { this.player.webkitRequestFullScreen(); }
+                else if (this.player.msRequestFullscreen) { this.player.msRequestFullscreen(); }
+            }
+            
+            return this;
+        },
+        
         // Parses a float value in seconds (from video.currentTime etc) to normal time format
         /** @deprecated */
         parseTime: function (val) {
@@ -1171,25 +1188,12 @@ var Moovie = function (videos, options) {
             return time;
         },
         
-        /** @deprecated */
-        requestFullScreen: function () {
-            if (this._wrapper.requestFullscreen) { this._wrapper.requestFullscreen(); }
-            else if (this._wrapper.mozRequestFullScreen) { this._wrapper.mozRequestFullScreen(); }
-            else if (this._wrapper.webkitRequestFullScreen) { this._wrapper.webkitRequestFullScreen(); }
-            else if (this._wrapper.msRequestFullscreen) { this._wrapper.msRequestFullscreen(); }
-            this._fullscreen = true;
-        },
-        
-        // I hate using exitFullscreen(), cancelFullscreen sounds much nicer.
-        /** @deprecated */
-        cancelFullScreen: function () {
-            if (document.exitFullscreen) { document.exitFullscreen(); }
-            else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
-            else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen(); }
-            else if (document.msExitFullscreen) { document.msExitFullscreen(); }
-            this._fullscreen = false;
-        },
-        
+        /**
+         * Returns the element used to wrap ".player" and ".debug".
+         * 
+         * @this {Doit}
+         * @return {Doit} The instance on which this method was called.
+         */
         toElement: function () {
             return this.element;
         }
