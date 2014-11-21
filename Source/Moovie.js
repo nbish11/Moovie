@@ -220,67 +220,6 @@ var Moovie = function (videos, options) {
         }
     });
     
-    // keep in mind you must call next() 
-    // to select the first item.
-    var Iterator = new Class({
-        index: -1,
-        collection: [],
-        legth: 0,
-        
-        initialize: function (collection) {
-            this.collection.combine(collection);
-            this.length = this.collection.length;
-        },
-        
-        rewind: function () {
-            this.index = -1;
-            return this;
-        },
-        
-        hasPrevious: function () {
-            return this.index > 0;
-        },
-        
-        previous: function () {
-            if (this.hasPrevious()) {
-                this.index = this.index - 1;
-                return this.current();
-            }
-            
-            return false;
-        },
-        
-        hasNext: function () {
-            return this.index < this.collection.length - 1;
-        },
-        
-        next: function () {
-            if (this.hasNext()) {
-                this.index = this.index + 1;
-                return this.current();
-            }
-            
-            return false;
-        },
-        
-        current: function () {
-            return this.collection[this.index];
-        },
-        
-        each: function (callback, bind) {
-            var active = this.index;
-            this.rewind();
-            
-            while (this.hasNext()) {
-                var current = this.next();
-                callback.call(bind || this, this.index, current,
-                    active === -1 ? 0 : active);
-            }
-            
-            this.index = active;
-        }
-    });
-    
     // The main function, which handles one <video> at a time.
     // <http://www.urbandictionary.com/define.php?term=Doit&defid=3379319>
     var Doit = new Class({
@@ -303,40 +242,6 @@ var Moovie = function (videos, options) {
             
             // overide defaults with user provided options
             this.setOptions(options);
-            
-            // Add the current video to the playlist stack
-            if (typeOf(this.options.playlist) === 'string') {
-                var data = null;
-                var request = new Request.JSON({
-                    method: 'GET',
-                    url: this.options.playlist,
-                    async: false,
-                    onSuccess: function (responseJSON) {
-                        data = responseJSON;
-                    }
-                }).send();
-                
-                data.unshift({
-                    id: this.options.id,
-                    src: this.video.src,
-                    title: this.video.title || this.options.title
-                });
-                
-                this.playlist = new Iterator(data);
-            } else {
-                // This will be removed for the "Milestone 1.0.0" release.
-                // This is only here for backwards compatibility.
-                this.options.playlist.unshift({
-                    id: this.options.id,
-                    src: this.video.src,
-                    title: this.options.title
-                });
-                
-                this.playlist = new Iterator(this.options.playlist);
-            }
-            
-            // Set to first item.
-            this.playlist.next();
             
             // turn off HTML5 native video controls
             this.video.controls = false;
@@ -476,6 +381,165 @@ var Moovie = function (videos, options) {
             return this;
         },
         
+        buildPlaylist: function () {
+            var self = this, video = this.video;
+            var playlist = new Element('div.playlist');
+            
+            playlist.index = 0;
+            playlist.collection = [];
+            playlist.length = 0;
+            
+            playlist.rewind = function () {
+                this.index = 0;
+                return this;
+            };
+            
+            playlist.load = function () {
+                this.index = 1;
+                this.length = this.collection.length;
+                return this;
+            };
+            
+            playlist.hasPrevious = function () {
+                return this.index > 1;
+            };
+            
+            playlist.previous = function () {
+                return this.select(this.index - 1);
+            };
+            
+            playlist.hasNext = function () {
+                return this.index < this.collection.length;
+            };
+            
+            playlist.next = function () {
+                return this.select(this.index + 1);
+            };
+            
+            playlist.select = function (id) {
+                if (typeOf(id) === 'string') {
+                    this.collection.each(function (item, index) {
+                        if (item.id === id) {
+                            id = index + 1;
+                            return; // break loop
+                        }
+                    });
+                }
+                
+                if (id > 0 && id <= this.collection.length) {
+                    this.index = id;
+                    var current = this.active();
+                    
+                    // set ".active" in HTML list
+                    this.getElement('ol.playlist li.active').removeClass('active');
+                    this.getElement('ol.playlist li[data-index="' + this.index + '"]').addClass('active');
+                    
+                    // set "src" attribute
+                    video.src = current.src;
+                    
+                    // set "poster" attribute
+                    if (current.poster) {
+                        video.poster = current.poster;
+                    }
+                    
+                    // remove old <track> tags
+                    video.getChildren('track').destroy();
+                
+                    // add new <track> tags
+                    if (current.tracks) {
+                        current.tracks.each(function (track, index) {
+                            if (typeOf(track) === 'object') {
+                                video.grab(new Element('track', {
+                                    src: track.src,
+                                    srclang: track.srclang || 'en',
+                                    kind: 'moovie',
+                                    label: track.label  // intentional return of "undefined"
+                                }));
+                            }
+                        });
+                        
+                        self.initTracks();
+                    }
+                    
+                    video.load();
+                    video.play();
+                    
+                    var title = current.title || new URI(current.src).get('file');
+                    self.title.setText(title).show();
+                    //panels.info.getElement('dt.title + dd').set('html', title);
+                    //panels.info.getElement('dt.url + dd').set('html', current.src);
+                }
+                
+                return false;
+            };
+            
+            playlist.active = function () {
+                return this.collection[this.index - 1];
+            };
+            
+            playlist.each = function (callback) {
+                var active = this.index || 1;
+                
+                this.collection.forEach(function (item, index) {
+                    callback.call(this, index + 1, item, active);
+                }, this);
+            };
+            
+            // fetch the playlist
+            (function () {
+                var firstItem = {
+                    id: self.options.id,
+                    src: video.currentSrc || video.src,
+                    title: self.options.title,
+                    poster: video.poster || self.options.poster,
+                    tracks: video.getChildren('track')
+                        .get('src', 'srclang', 'kind', 'label')
+                };
+                
+                // JSON playlist via AJAX
+                if (typeOf(self.options.playlist) === 'string') {
+                    var data = null;
+                    var request = new Request.JSON({
+                        method: 'GET',
+                        url: self.options.playlist,
+                        async: false,
+                        onSuccess: function (response) {
+                            data = response;
+                        }
+                    }).send();
+                    
+                    data.unshift(firstItem);
+                    playlist.collection.combine(data);
+                
+                // Embedded playlist
+                } else if (typeOf(self.options.playlist) === 'array') {
+                    self.options.playlist.unshift(firstItem);
+                    playlist.collection.combine(self.options.playlist);
+                }
+            })();
+            
+            playlist.set('html', '\
+                <div><div class="heading">Playlist</div></div>\
+                <div><ol class="playlist"></ol></div>\
+            ');
+            
+            playlist.each(function (index, item, active) {
+                var title = item.title || new URI(item.src).get('file');
+                this.getElement('ol.playlist').grab(new Element('li', {
+                    'data-index': index,
+                    'class': (index === active ? 'active' : ''),
+                    'html': '\
+                        <div class="checkbox-widget" data-checked="true">\
+                            <div class="checkbox"></div>\
+                            <div class="label">' + title + '</div>\
+                        </div>\
+                '}));
+            });
+            
+            this.playlist = playlist;
+            return this;
+        },
+        
         buildPlayer: function (wrapper, container) {
             // references - so I don't have to bind
             var video = this.video,
@@ -508,8 +572,8 @@ var Moovie = function (videos, options) {
             panels.info         = new Element('div.info');
             panels.settings     = new Element('div.settings');
             panels.about        = new Element('div.about');
-            panels.playlist     = new Element('div.playlist');
-
+            panels.playlist     = this.buildPlaylist().playlist.load();
+            
             panels.adopt(panels.info, panels.settings, panels.about, panels.playlist);
 
             panels.set('tween', {duration: 250});
@@ -559,25 +623,6 @@ var Moovie = function (videos, options) {
                 <p>Copyright © 2010, Colin Aarts</p>\
                 <p><a href="http://colinaarts.com/code/moovie/" rel="external">http://colinaarts.com/code/moovie/</a></p>\
             ');
-
-            // Content for `playlist` panel
-            panels.playlist.set('html', '\
-                <div><div class="heading">Playlist</div></div>\
-                <div><ol class="playlist"></ol></div>\
-            ');
-            
-            // content for playlist
-            this.playlist.each(function (index, item, active) {
-                panels.playlist.getElement('ol.playlist').grab(new Element('li', {
-                    'data-index': index,
-                    'class': (index === active ? 'active' : ''),
-                    'html': '\
-                        <div class="checkbox-widget" data-checked="true">\
-                            <div class="checkbox"></div>\
-                            <div class="label">' + item.title + '</div>\
-                        </div>\
-                '}));
-            });
 
             // Controls ----------------------------------------------------------------
             var controls            = new Element('div.controls');
@@ -722,74 +767,6 @@ var Moovie = function (videos, options) {
                     this.fade('in');
                 }
             };
-            
-            // Methods - panels.playlist.play
-            panels.playlist.play = function (action) {
-                var current = self.playlist.current();
-
-                if (action === 'previous') {
-                    if (self.playlist.hasPrevious()) {
-                        current = self.playlist.previous();
-                        
-                    // change this to a "no more previous videos in playlist" message?
-                    } else {
-                        self.playlist.index = self.playlist.length - 1;
-                        current = self.playlist.current();
-                    }
-                } else if (action === 'next') {
-                    if (self.playlist.hasNext()) {
-                        current = self.playlist.next();
-                    
-                    // change this to a "last video in playlist" message?
-                    } else {
-                        self.playlist.rewind().next();
-                        current = self.playlist.current();
-                    }
-                } else if (typeOf(action) === 'number') {
-                    if (action >= 0 && action < self.playlist.length - 1) {
-                        self.playlist.index = action;
-                        current = self.playlist.current();
-                    }
-                }
-
-                panels.playlist.setActive(self.playlist.index);
-
-                video.src = current.src;
-                if (current.poster) {video.poster = current.poster;}
-                
-                // remove old <track> tags
-                self.video.getChildren('track').destroy();
-                
-                // add new <track> tags
-                if (current.tracks) {
-                    current.tracks.each(function (track, index) {
-                        if (typeOf(track) === 'object') {
-                            self.video.grab(new Element('track', {
-                                src: track.src,
-                                srclang: track.srclang || 'en',
-                                kind: 'moovie',
-                                label: track.label  // intentional return of "undefined"
-                            }));
-                        }
-                    });
-                    
-                    self.initTracks();
-                }
-                
-                video.load();
-                video.play();
-                
-                var foundTitle = current.title || new URI(current.src).get('file');
-                self.title.setText(foundTitle).show();
-                panels.info.getElement('dt.title + dd').set('html', foundTitle);
-                panels.info.getElement('dt.url + dd').set('html', current.src);
-            };
-            
-            // Methods - panels.playlist.setActive
-            panels.playlist.setActive = function (index) {
-                panels.playlist.getElement('ol.playlist li.active').removeClass('active');
-                panels.playlist.getElement('ol.playlist li[data-index="' + index + '"]').addClass('active');
-            };
 
             // Methods - controls.play.update
             controls.play.update = function (action) {
@@ -897,12 +874,12 @@ var Moovie = function (videos, options) {
                 }
             });
 
-            panels.playlist.addEvent('click:relay(.label)', function (e) {
+            this.playlist.addEvent('click:relay(.label)', function (e) {
                 e.stop();
 
                 var item = this.getParents('li')[0];
-                var index = +item.get('data-index');
-                panels.playlist.play(index);
+                var index = item.get('data-index');
+                self.playlist.select(index);
             });
             
             // Events - controls.playback.play
@@ -926,11 +903,11 @@ var Moovie = function (videos, options) {
             // Events - controls.playback.next
             if (this.playlist.length > 1) {
                 controls.previous.addEvent('click', function (e) {
-                    panels.playlist.play('previous');
+                    self.playlist.previous();
                 });
 
                 controls.next.addEvent('click', function (e) {
-                    panels.playlist.play('next');
+                    self.playlist.next();
                 });
             }
             
@@ -1031,7 +1008,7 @@ var Moovie = function (videos, options) {
 
                 ended: function (e) {
                     if (self.playlist.length > 1) {
-                        panels.playlist.play('next');
+                        self.playlist.next();
                     } else {
                         controls.play.update();
                         overlay.update('replay');
