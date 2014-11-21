@@ -376,10 +376,10 @@ var Moovie = function (videos, options) {
                 var toSeconds = function (t) {
                     t = t.split(/[:,]/);
                     
-                    return parseFloat(t[0], 10) * 3600 +
-                           parseFloat(t[1], 10) * 60 +
-                           parseFloat(t[2], 10) +
-                           parseFloat(t[3], 10) / 1000;
+                    return t[0].toInt() * 3600 +
+                           t[1].toInt() * 60 +
+                           t[2].toInt() +
+                           t[3].toInt() / 1000;
                 };
                 
                 // Two newlines ("\n\n") in a row is considered the cue break.
