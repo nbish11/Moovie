@@ -269,6 +269,15 @@ var Moovie = function (videos, options) {
             // an effect on the muted state and vice versa.
             this._muted = this.video.muted;
             
+            // add a stop function to the <video> tag
+            if (!HTMLVideoElement.prototype.stop) {
+                HTMLVideoElement.prototype.stop = function () {
+                    this.pause();
+                    this.currentTime = 0;
+                    return this;
+                };
+            }
+            
             // build Moovie
             this.build();
         },
@@ -663,7 +672,7 @@ var Moovie = function (videos, options) {
                     time += (ss < 10 ? '0' : '') + ss;
                 }
                 
-                this.set('text', time);
+                return time;
             };
             
             var controls            = new Element('div.controls');
@@ -736,9 +745,19 @@ var Moovie = function (videos, options) {
                 }
             };
             
-            controls.currentTime.update = toTimeString;
-            controls.duration.update = toTimeString;
-            controls.progress.time.getFirst().setTime = toTimeString;
+            controls.currentTime.update = function (val) {
+                this.set('text', toTimeString(val));
+            };
+            
+            controls.duration.update = function (val) {
+                this.set('text', toTimeString(val));
+            };
+            
+            controls.progress.time.setTime = function (val, offset) {
+                this.getFirst().set('text', toTimeString(val));
+                this.setStyle('left', offset + 'px');
+                this.fade('show');
+            };
             
             this.controls = controls;
             return this;
@@ -819,174 +838,162 @@ var Moovie = function (videos, options) {
                 }
             );
             
-            // Events - Masthead
-            // wrap mouseenter and mouseleave in if?
-            wrapper.addEvent('mouseenter', function (e) {
-                self.controls.fade('in');
-            });
+            this.attach();
             
-            wrapper.addEvent('mouseleave', function (e) {
-                if (options.autohideControls) {
-                    self.controls.fade('out');
+            if ( ! video.autoplay) {
+                self.overlay.update('play');
+            }
+
+            var tips = new Tips(wrapper.getElements('[title]'), {
+                className: 'video-tip',
+                title: '',
+                text: function (el) {
+                    return el.get('title');
+                }
+            });
+        },
+        
+        /**
+         * Adds all the required event listeners to the player.
+         * 
+         * @this {Doit}
+         * @return {Doit} The instance on which this method was called.
+         */
+        attach: function () {
+            var self = this, video = this.video;
+            var muted = this._muted;
+            
+            this.player.addEvents({
+                mouseenter: function (e) {
+                    self.controls.fade('in');
+                },
+                
+                mouseleave: function (e) {
+                    if (self.options.autohideControls) {
+                        self.controls.fade('out');
+                    }
                 }
             });
             
-            // Events - Overlay
             $$(this.overlay.play, this.overlay.replay).addEvent('click', function (e) {
                 video.play();
                 self.title.show();
             });
-
-            $$(this.overlay.paused).addEvent('click', function (e) {
-                video.play();
-            });
             
-            // Events - Panels (Checkbox widgets)
+            this.overlay.paused.addEvent('click', this.video.play.bind(this.video));
+            
             this.panels.addEvent('click:relay(.checkbox-widget)', function (e) {
                 if (this.get('data-checked') === 'false') {
                     this.set('data-checked', 'true');
                 } else {
                     this.set('data-checked', 'false');
                 }
-
+                
                 var control = this.get('data-control');
                 var checked = this.get('data-checked');
-
+                
                 switch (control) {
                     case 'autohideControls':
-                        options.autohideControls = checked === 'true';
+                        self.options.autohideControls = (checked === 'true');
                         break;
-
+                        
                     case 'loop':
                         video.loop = checked === 'true';
                         break;
-
+                        
                     case 'captions':
-                        options.captions = checked === 'true';
+                        self.options.captions = checked === 'true';
                         break;
                 }
                 
                 self.panels.update('none');
             });
-
+            
             this.playlist.addEvent('click:relay(.label)', function (e) {
                 e.stop();
 
-                var item = this.getParents('li')[0];
-                var index = item.get('data-index');
+                var index = this.getParents('li')[0].get('data-index');
                 self.playlist.select(index);
             });
             
-            // Events - controls.playback.play
-            this.controls.play.addEvent('click', function (e) {
-                if (video.paused && video.readyState >= 3) {
-                    video.play();
-                } else if (!video.paused && video.ended) {
-                    video.currentTime = 0;
-                } else if (!video.paused) {
-                    video.pause();
-                }
-            });
+            this.controls.play.addEvent('click', this.togglePlayback.bind(this));
+            this.controls.stop.addEvent('click', this.video.stop.bind(this.video));
             
-            // Events - controls.playback.stop
-            this.controls.stop.addEvent('click', function (e) {
-                video.currentTime = 0;
-                video.pause();
-            });
-            
-            // Events - controls.playback.previous
-            // Events - controls.playback.next
             if (this.playlist.length > 1) {
-                this.controls.previous.addEvent('click', function (e) {
-                    self.playlist.previous();
-                });
-
-                this.controls.next.addEvent('click', function (e) {
-                    self.playlist.next();
-                });
+                this.controls.previous.addEvent('click', this.playlist.previous.bind(this.playlist));
+                this.controls.next.addEvent('click', this.playlist.next.bind(this.playlist));
             }
             
-            // update time display tooltip when hovering over track
-            this.controls.progress.addEvent('mousemove', function (e) {
-                if ( ! e.target.hasClass('knob')) {
-                    var barX = self.controls.progress.getPosition().x;
-                    var barW = self.controls.progress.bar.getSize().x;
-                    var offsetPx = e.page.x - barX;
-                    var offsetPc = offsetPx / barW * 100;
-                    
-                    self.controls.progress.time.fade('show');
-                    self.controls.progress.time.setStyle('left', offsetPx + 'px');
-                    self.controls.progress.time.getFirst().setTime((video.duration || 0) / 100 * offsetPc);
+            // display time tooltip when hovering over track
+            this.controls.progress.addEvents({
+                mousemove: function (e) {
+                    if ( ! e.target.hasClass('knob')) {
+                        var offsetPx = e.page.x - this.getPosition().x;
+                        var offsetPc = offsetPx / this.bar.getSize().x * 100;
+                        var value = (video.duration || 0) / 100 * offsetPc;
+                        
+                        self.controls.progress.time.setTime(value, offsetPx);
+                    }
+                },
+                
+                mouseleave: function (e) {
+                    this.time.fade('hide');
                 }
             });
             
-            // update time display tooltip when mouse enters knob
-            this.controls.progress.knob.addEvent('mouseenter', function (e) {
-                var knobOffset = -self.controls.progress.slider.options.offset;
-                var barX = self.controls.progress.bar.getPosition().x;
-                var sliderX = self.controls.progress.knob.getPosition().x;
+            // display time tooltip when over knob
+            this.controls.progress.knob.addEvents({
+                mouseenter: function (e) {
+                    var parent = this.getParent('.progress');
+                    var knobX = -parent.slider.options.offset;
+                    var barX = parent.bar.getPosition().x;
+                    var offset = this.getPosition().x - barX - knobX;
+                    
+                    parent.time.setTime(video.currentTime, offset);
+                },
                 
-                self.controls.progress.time.fade('show');
-                self.controls.progress.time.setStyle('left', sliderX - barX - knobOffset + 'px');
-                self.controls.progress.time.getFirst().setTime(video.currentTime);
+                mouseleave: function (e) {
+                    this.getParent('.progress').time.fade('hide');
+                }
             });
             
-            // Events - controls.progress.bar
-            this.controls.progress.addEvent('mouseleave', function (e) {
-                self.controls.progress.time.fade('hide');
-            });
-            
-            // Events - controls.progress.slider
-            this.controls.progress.knob.addEvent('mouseleave', function (e) {
-                self.controls.progress.time.fade('hide');
-            });
-            
-            // Events - controls.volume.mute
             this.controls.volume.mute.addEvent('click', function (e) {
                 video.muted = !video.muted;
             });
             
-            // Events - controls.volume.show
-            this.controls.volume.addEvent('mouseenter', function (e) {
-                self.controls.volume.popup.fade('in');
+            this.controls.volume.addEvents({
+                mouseenter: function (e) {
+                    this.popup.fade('in');
+                },
+                
+                mouseleave: function (e) {
+                    this.popup.fade('out')
+                }
             });
             
-            // Events - controls.volume.hide
-            this.controls.volume.addEvent('mouseleave', function (e) {
-                self.controls.volume.popup.fade('out');
+            this.controls.more.addEvents({
+                mouseenter: function (e) {
+                    this.popup.fade('in');
+                },
+                
+                mouseleave: function (e) {
+                    this.popup.fade('out');
+                }
             });
             
-            // Events - controls.more.show
-            this.controls.more.addEvent('mouseenter', function (e) {
-                self.controls.more.popup.fade('in');
+            $$(this.controls.settings,
+            this.controls.more).addEvent('click', function (e) {
+                if (e.target.hasClass('settings')) {
+                    self.panels.update('settings');
+                } else if (e.target.hasClass('playlist')) {
+                    self.panels.update('playlist')
+                } else if (e.target.hasClass('about')) {
+                    self.panels.update('about');
+                } else if (e.target.hasClass('info')) {
+                    self.panels.update('info');
+                }
             });
             
-            // Events - controls.more.hide
-            this.controls.more.addEvent('mouseleave', function (e) {
-                self.controls.more.popup.fade('out');
-            });
-            
-            // Events - controls.more.about
-            this.controls.more.about.addEvent('click', function (e) {
-                self.panels.update('about');
-            });
-            
-            // Events - controls.more.info
-            this.controls.more.info.addEvent('click', function (e) {
-                self.panels.update('info');
-            });
-            
-            // Events - controls.more.playlist
-            this.controls.more.playlist.addEvent('click', function (e) {
-                self.panels.update('playlist');
-            });
-            
-            // Events - controls.playback.settings
-            this.controls.settings.addEvent('click', function (e) {
-                self.panels.update('settings');
-            });
-            
-            // Events - controls.playback.fullscreen
             this.controls.fullscreen.addEvent('click', this.toggleFullscreen.bind(this));
             
             video.addEvents({
@@ -1002,6 +1009,7 @@ var Moovie = function (videos, options) {
 
                 pause: function (e) {
                     self.controls.play.update();
+                    self.overlay.update('paused');
                 },
 
                 ended: function (e) {
@@ -1100,7 +1108,7 @@ var Moovie = function (videos, options) {
                         self.controls.volume.mute.removeClass('muted');
                     }
                     
-                    if ( ! controls.volume.slider.isDragging) {
+                    if ( ! self.controls.volume.slider.isDragging) {
                         var knob = self.controls.volume.knob;
                         // If muted, assume 0 for volume to visualize the muted state in the slider as well. Don't actually change the volume, though, so when un-muted, the slider simply goes back to its former value.
                         var volume = video.muted && mutedChanged ? 0 : video.volume;
@@ -1110,18 +1118,26 @@ var Moovie = function (videos, options) {
                     }
                 }
             });
-
-            if ( ! video.autoplay) {
-                self.overlay.update('play');
+        },
+        
+        /**
+         * Play video if paused or ended, else pause video.
+         * 
+         * @this {Doit}
+         * @return {Doit} The instance on which this method was called.
+         */
+        togglePlayback: function () {
+            var v = this.video;
+            
+            if (v.paused && v.readyState >= 3) {
+                v.play();
+            } else if (!v.paused && v.ended) {
+                v.currentTime = 0;
+            } else if (!v.paused){
+                v.pause();
             }
-
-            var tips = new Tips(wrapper.getElements('[title]'), {
-                className: 'video-tip',
-                title: '',
-                text: function (el) {
-                    return el.get('title');
-                }
-            });
+            
+            return this;
         },
         
         /**
