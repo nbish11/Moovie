@@ -230,7 +230,11 @@ var Moovie = function (videos, options) {
             autohideControls: true,
             title: null,
             playlist: [],
-            captions: true
+            captions: true,
+            overlay: {
+                cover: true,
+                
+            }
         },
         
         initialize: function (video, options) {
@@ -359,6 +363,8 @@ var Moovie = function (videos, options) {
         },
         
         buildOverlay: function () {
+            var self = this, cover = this.options.overlay.cover;
+            
             var overlay         = new Element('div.overlay');
             overlay.wrapper     = new Element('div.wrapper');
             overlay.buffering   = new Element('div.buffering[text=Buffering...]');
@@ -373,8 +379,19 @@ var Moovie = function (videos, options) {
             
             overlay.update = function (which) {
                 if (which === 'none') {
+                    if (cover) {
+                        self.controls.setStyle('display', '');
+                    }
+                    
                     this.fade('out');
                 } else {
+                    if (cover) {
+                        this.setStyle('z-index', 9999);
+                        self.controls.hide();
+                        self.title.hide();
+                        self.panels.update('none');
+                    }
+                    
                     this.wrapper.getChildren().hide();
                     this[which].show();
                     this.fade('in');
@@ -841,7 +858,7 @@ var Moovie = function (videos, options) {
             this.attach();
             
             if ( ! video.autoplay) {
-                self.overlay.update('play');
+                this.overlay.update('play');
             }
 
             var tips = new Tips(wrapper.getElements('[title]'), {
