@@ -493,6 +493,7 @@ var Moovie = function (videos, options) {
                     
                     var title = current.title || new URI(current.src).get('file');
                     self.title.setText(title).show();
+                    self.panels.update('none');
                     //panels.info.getElement('dt.title + dd').set('html', title);
                     //panels.info.getElement('dt.url + dd').set('html', current.src);
                 }
@@ -885,6 +886,8 @@ var Moovie = function (videos, options) {
                         options.captions = checked === 'true';
                         break;
                 }
+                
+                self.panels.update('none');
             });
 
             this.playlist.addEvent('click:relay(.label)', function (e) {
