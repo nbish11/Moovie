@@ -349,6 +349,33 @@ var Moovie = function (videos, options) {
             this.captions.hide();
         },
         
+        buildOverlay: function () {
+            var overlay         = new Element('div.overlay');
+            overlay.wrapper     = new Element('div.wrapper');
+            overlay.buffering   = new Element('div.buffering[text=Buffering...]');
+            overlay.play        = new Element('div.play[text=Play Video]');
+            overlay.replay      = new Element('div.replay[text=Replay]');
+            overlay.paused      = new Element('div.paused[text=Paused]');
+            
+            overlay.wrapper.adopt(overlay.buffering, overlay.play, overlay.replay, overlay.paused);
+            overlay.grab(overlay.wrapper);
+            overlay.set('tween', { duration: 50 });
+            overlay.fade('hide');
+            
+            overlay.update = function (which) {
+                if (which === 'none') {
+                    this.fade('out');
+                } else {
+                    this.wrapper.getChildren().hide();
+                    this[which].show();
+                    this.fade('in');
+                }
+            };
+            
+            this.overlay = overlay;
+            return this;
+        },
+        
         buildTitle: function () {
             this.title = new Element('div.title[text=' + this.options.title + ']');
             this.title.set('tween', { duration: 2000 });
@@ -549,20 +576,9 @@ var Moovie = function (videos, options) {
             
             // build captions
             this.buildCaptions();
-
-            // Overlay -----------------------------------------------------------------
-            var overlay         = new Element('div.overlay');
-            overlay.wrapper     = new Element('div.wrapper');
-            overlay.buffering   = new Element('div.buffering[text=Buffering...]');
-            overlay.play        = new Element('div.play[text=Play Video]');
-            overlay.replay      = new Element('div.replay[text=Replay]');
-            overlay.paused      = new Element('div.paused[text=Paused]');
             
-            overlay.wrapper.adopt(overlay.buffering, overlay.play, overlay.replay, overlay.paused);
-            overlay.grab(overlay.wrapper);
-            
-            overlay.set('tween', {duration: 50});
-            overlay.fade('hide');
+            //build overlay
+            this.buildOverlay();
             
             // build title and hide
             this.buildTitle();
@@ -694,7 +710,7 @@ var Moovie = function (videos, options) {
             controls.set('tween', {duration: 150});
             
             // Inject and do some post-processing --------------------------------------
-            wrapper.adopt(this.captions, overlay, this.title, panels, controls);
+            wrapper.adopt(this.captions, this.overlay, this.title, panels, controls);
 
             // Adjust height of panel container to account for controls bar
             panels.setStyle('height', panels.getStyle('height').toInt() - controls.getStyle('height').toInt());
@@ -744,17 +760,6 @@ var Moovie = function (videos, options) {
                     }
                 }
             );
-            
-            // Methods - overlay.update
-            overlay.update = function (which) {
-                if (which === 'none') {
-                    this.fade('out');
-                } else {
-                    this.wrapper.getChildren().hide();
-                    this[which].show();
-                    this.fade('in');
-                }
-            };
 
             // Methods - panels.update
             panels.update = function (which) {
@@ -839,12 +844,12 @@ var Moovie = function (videos, options) {
             });
             
             // Events - Overlay
-            $$(overlay.play, overlay.replay).addEvent('click', function (e) {
+            $$(this.overlay.play, this.overlay.replay).addEvent('click', function (e) {
                 video.play();
                 self.title.show();
             });
 
-            $$(overlay.paused).addEvent('click', function (e) {
+            $$(this.overlay.paused).addEvent('click', function (e) {
                 video.play();
             });
             
@@ -994,12 +999,12 @@ var Moovie = function (videos, options) {
             video.addEvents({
                 click: function (e) {
                     video.pause();
-                    overlay.update('paused');
+                    self.overlay.update('paused');
                 },
 
                 play: function (e) {
                     controls.play.update();
-                    overlay.update('none');
+                    self.overlay.update('none');
                 },
 
                 pause: function (e) {
@@ -1011,7 +1016,7 @@ var Moovie = function (videos, options) {
                         self.playlist.next();
                     } else {
                         controls.play.update();
-                        overlay.update('replay');
+                        self.overlay.update('replay');
                     }
                 },
 
@@ -1027,11 +1032,11 @@ var Moovie = function (videos, options) {
                 },
 
                 seeking: function (e) {
-                    overlay.update('buffering');
+                    self.overlay.update('buffering');
                 },
 
                 seeked: function (e) {
-                    overlay.update('none');
+                    self.overlay.update('none');
                     
                     if ( ! video.paused) {
                         controls.play.update();
@@ -1090,7 +1095,7 @@ var Moovie = function (videos, options) {
             });
 
             if ( ! video.autoplay) {
-                overlay.update('play');
+                self.overlay.update('play');
             }
 
             var tips = new Tips(wrapper.getElements('[title]'), {
