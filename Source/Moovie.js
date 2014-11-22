@@ -995,7 +995,7 @@ var Moovie = function (videos, options) {
                 },
                 
                 mouseleave: function (e) {
-                    this.popup.fade('out')
+                    this.popup.fade('out');
                 }
             });
             
@@ -1014,7 +1014,7 @@ var Moovie = function (videos, options) {
                 if (e.target.hasClass('settings')) {
                     self.panels.update('settings');
                 } else if (e.target.hasClass('playlist')) {
-                    self.panels.update('playlist')
+                    self.panels.update('playlist');
                 } else if (e.target.hasClass('about')) {
                     self.panels.update('about');
                 } else if (e.target.hasClass('info')) {
