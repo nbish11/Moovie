@@ -69,7 +69,6 @@ var Moovie = function (videos, options) {
             };
             
             this.build();
-            this.attach();
         },
         
         build: function () {
@@ -107,13 +106,13 @@ var Moovie = function (videos, options) {
         },
         
         enable: function () {
-            // add to DOM
             this.attach();
+            this.elements.debug.show();
         },
         
         disable: function () {
             this.detach();
-            // remove from DOM
+            this.elements.debug.hide();
         },
         
         flash: function (key, val, msg) {
@@ -346,10 +345,9 @@ var Moovie = function (videos, options) {
             this._container = container;    // wraps player and debug
             
             // build debug
-            if (this.options.debug) {
-                this.debug = new Debug(this.video);
-                $(this.debug).inject(container);
-            }
+            this.debug = new Debug(this.video);
+            $(this.debug).inject(container);
+            if (this.options.debug) { this.debug.enable(); }
             
             // build player
             this.buildPlayer(wrapper, container);
@@ -650,6 +648,11 @@ var Moovie = function (videos, options) {
                     <div class="checkbox"></div>\
                     <div class="label">Show captions</div>\
                 </div>\
+                \
+                <div class="checkbox-widget" data-control="debug" data-checked="' + this.options.debug + '">\
+                    <div class="checkbox"></div>\
+                    <div class="label">Enable/Disable Debug Panel</div>\
+                </div>\
             ');
 
             // Content for `about` panel
@@ -920,6 +923,14 @@ var Moovie = function (videos, options) {
                         
                     case 'captions':
                         self.options.captions = checked === 'true';
+                        break;
+                        
+                    case 'debug':
+                        if (checked === 'true') {
+                            self.debug.enable();
+                        } else {
+                            self.debug.disable();
+                        }
                         break;
                 }
                 
