@@ -567,6 +567,77 @@ var Moovie = function (videos, options) {
             return this;
         },
         
+        buildPanels: function () {
+            var panels          = new Element('div.panels');
+            panels.info         = new Element('div.info');
+            panels.settings     = new Element('div.settings');
+            panels.about        = new Element('div.about');
+            panels.playlist     = this.playlist;
+            
+            panels.adopt(panels.info, panels.settings, panels.about, panels.playlist);
+            panels.set('tween', {duration: 250});
+            panels.fade('hide');
+            
+            panels.update = function (which) {
+                if (which === 'none' || this[which].hasClass('active')) {
+                    this.getChildren('.active').removeClass('active');
+                    this.fade('out');
+                } else {
+                    this.getChildren().hide().removeClass('active');
+                    this[which].show().addClass('active');
+                    this.fade('in');
+                }
+            };
+
+            // Content for `info` panel
+            panels.info.set('html', '\
+                <div class="heading">Video information</div>\
+                \
+                <dl>\
+                    <dt class="title">Title</dt>\
+                    <dd>' + this.options.title + '</dd>\
+                    \
+                    <dt class="url">URL</dt>\
+                    <dd>' + this.video.src + '</dd>\
+                    \
+                    <dt class="size">Size</dt>\
+                    <dd></dd>\
+                </dl>\
+            ');
+
+            // Content for `settings` panel
+            panels.settings.set('html', '\
+                <div class="heading">Settings</div>\
+                \
+                <div class="checkbox-widget" data-control="autohideControls" data-checked="' + this.options.autohideControls + '">\
+                    <div class="checkbox"></div>\
+                    <div class="label">Auto-hide controls</div>\
+                </div>\
+                \
+                <div class="checkbox-widget" data-control="loop" data-checked="' + (this.video.loop || false) + '">\
+                    <div class="checkbox"></div>\
+                    <div class="label">Loop video</div>\
+                </div>\
+                \
+                <div class="checkbox-widget" data-control="captions" data-checked="' + this.options.captions + '">\
+                    <div class="checkbox"></div>\
+                    <div class="label">Show captions</div>\
+                </div>\
+            ');
+
+            // Content for `about` panel
+            panels.about.set('html', '\
+                <div class="heading">About this player</div>\
+                \
+                <p><b>Moovie</b> v1.0 <i>alpha</i></p>\
+                <p>Copyright © 2010, Colin Aarts</p>\
+                <p><a href="http://colinaarts.com/code/moovie/" rel="external">http://colinaarts.com/code/moovie/</a></p>\
+            ');
+            
+            this.panels = panels;
+            return this;
+        },
+        
         buildPlayer: function (wrapper, container) {
             // references - so I don't have to bind
             var video = this.video,
@@ -582,63 +653,12 @@ var Moovie = function (videos, options) {
             
             // build title and hide
             this.buildTitle();
-
-            // Panels ------------------------------------------------------------------
-            var panels          = new Element('div.panels');
-            panels.info         = new Element('div.info');
-            panels.settings     = new Element('div.settings');
-            panels.about        = new Element('div.about');
-            panels.playlist     = this.buildPlaylist().playlist.load();
             
-            panels.adopt(panels.info, panels.settings, panels.about, panels.playlist);
-
-            panels.set('tween', {duration: 250});
-            panels.fade('hide');
-
-            // Content for `info` panel
-            panels.info.set('html', '\
-                <div class="heading">Video information</div>\
-                \
-                <dl>\
-                    <dt class="title">Title</dt>\
-                    <dd>' + options.title + '</dd>\
-                    \
-                    <dt class="url">URL</dt>\
-                    <dd>' + video.src + '</dd>\
-                    \
-                    <dt class="size">Size</dt>\
-                    <dd></dd>\
-                </dl>\
-            ');
-
-            // Content for `settings` panel
-            panels.settings.set('html', '\
-                <div class="heading">Settings</div>\
-                \
-                <div class="checkbox-widget" data-control="autohideControls" data-checked="' + options.autohideControls + '">\
-                    <div class="checkbox"></div>\
-                    <div class="label">Auto-hide controls</div>\
-                </div>\
-                \
-                <div class="checkbox-widget" data-control="loop" data-checked="' + (video.loop || false) + '">\
-                    <div class="checkbox"></div>\
-                    <div class="label">Loop video</div>\
-                </div>\
-                \
-                <div class="checkbox-widget" data-control="captions" data-checked="' + options.captions + '">\
-                    <div class="checkbox"></div>\
-                    <div class="label">Show captions</div>\
-                </div>\
-            ');
-
-            // Content for `about` panel
-            panels.about.set('html', '\
-                <div class="heading">About this player</div>\
-                \
-                <p><b>Moovie</b> v1.0 <i>alpha</i></p>\
-                <p>Copyright © 2010, Colin Aarts</p>\
-                <p><a href="http://colinaarts.com/code/moovie/" rel="external">http://colinaarts.com/code/moovie/</a></p>\
-            ');
+            // build playlist
+            this.buildPlaylist();
+            
+            // build panels
+            this.buildPanels();
 
             // Controls ----------------------------------------------------------------
             var controls            = new Element('div.controls');
@@ -710,17 +730,17 @@ var Moovie = function (videos, options) {
             controls.set('tween', {duration: 150});
             
             // Inject and do some post-processing --------------------------------------
-            wrapper.adopt(this.captions, this.overlay, this.title, panels, controls);
+            wrapper.adopt(this.captions, this.overlay, this.title, this.panels, controls);
 
             // Adjust height of panel container to account for controls bar
-            panels.setStyle('height', panels.getStyle('height').toInt() - controls.getStyle('height').toInt());
+            this.panels.setStyle('height', this.panels.getStyle('height').toInt() - controls.getStyle('height').toInt());
             
             // set video duration
             controls.duration.set('text', self.parseTime(video.duration));
             
             // Fixed height for playlist...
             (function () {
-                var el      = panels.playlist.getChildren('div:nth-child(2)')[0],
+                var el      = self.panels.playlist.getChildren('div:nth-child(2)')[0],
                     height  = 0,
                     content = el.getChildren().clone();
                 
@@ -728,7 +748,7 @@ var Moovie = function (videos, options) {
                 height = el.getStyle('height');
                 el.adopt(content);
                 el.getFirst().setStyle('height', height);
-                $$(panels.playlist, panels.playlist.getChildren()).setStyle('display', 'block');
+                $$(self.panels.playlist, self.panels.playlist.getChildren()).setStyle('display', 'block');
                 // Holy crap, that is ugly. One day, CSS will actually be able to lay out inferfaces. Or maybe not.
             })();
             
@@ -760,18 +780,6 @@ var Moovie = function (videos, options) {
                     }
                 }
             );
-
-            // Methods - panels.update
-            panels.update = function (which) {
-                if (which === 'none' || this[which].hasClass('active')) {
-                    this.getChildren('.active').removeClass('active');
-                    this.fade('out');
-                } else {
-                    this.getChildren().hide().removeClass('active');
-                    this[which].show().addClass('active');
-                    this.fade('in');
-                }
-            };
 
             // Methods - controls.play.update
             controls.play.update = function (action) {
@@ -854,7 +862,7 @@ var Moovie = function (videos, options) {
             });
             
             // Events - Panels (Checkbox widgets)
-            panels.addEvent('click:relay(.checkbox-widget)', function (e) {
+            this.panels.addEvent('click:relay(.checkbox-widget)', function (e) {
                 if (this.get('data-checked') === 'false') {
                     this.set('data-checked', 'true');
                 } else {
@@ -975,22 +983,22 @@ var Moovie = function (videos, options) {
             
             // Events - controls.more.about
             controls.more.about.addEvent('click', function (e) {
-                panels.update('about');
+                self.panels.update('about');
             });
             
             // Events - controls.more.info
             controls.more.info.addEvent('click', function (e) {
-                panels.update('info');
+                self.panels.update('info');
             });
             
             // Events - controls.more.playlist
             controls.more.playlist.addEvent('click', function (e) {
-                panels.update('playlist');
+                self.panels.update('playlist');
             });
             
             // Events - controls.playback.settings
             controls.settings.addEvent('click', function (e) {
-                panels.update('settings');
+                self.panels.update('settings');
             });
             
             // Events - controls.playback.fullscreen
