@@ -2,7 +2,7 @@
 ---
 description: An advanced HTML5 video player for MooTools.
 
-version: 0.7.2
+version: 0.8.2
 
 license: MIT-style
 
@@ -15,13 +15,10 @@ authors:
 requires:
     - MooTools-core 1.5.1
     - MooTools-more 1.5.1
-    - [Class.Mutators.TrackInstances]
 
 provides: [Element.moovie]
-
 ...
 */
-"use strict";
 
 var Moovie = function (videos, options) {
     var Debug = new Class({
@@ -219,6 +216,8 @@ var Moovie = function (videos, options) {
         }
     });
     
+    var bound = {};
+    
     // The main function, which handles one <video> at a time.
     // <http://www.urbandictionary.com/define.php?term=Doit&defid=3379319>
     var Doit = new Class({
@@ -231,8 +230,7 @@ var Moovie = function (videos, options) {
             playlist: [],
             captions: true,
             overlay: {
-                cover: true,
-                
+                cover: true
             }
         },
         
@@ -284,8 +282,6 @@ var Moovie = function (videos, options) {
             // build Moovie
             this.build();
         },
-        
-        TrackInstances: true,
         
         initTracks: function () {
             var parse = function (data) {
@@ -347,7 +343,7 @@ var Moovie = function (videos, options) {
             // build debug
             this.debug = new Debug(this.video);
             $(this.debug).inject(container);
-            if (this.options.debug) { this.debug.enable(); }
+            if (!this.options.debug) { this.debug.disable(); }
             
             // build player
             this.buildPlayer(wrapper, container);
@@ -358,6 +354,8 @@ var Moovie = function (videos, options) {
             this.captions.caption = new Element('p');
             this.captions.grab(this.captions.caption);
             this.captions.hide();
+            
+            return this;
         },
         
         buildOverlay: function () {
@@ -457,7 +455,7 @@ var Moovie = function (videos, options) {
                         bool.ogv = bool.ogg;
                     }
                 } catch (e) {}
-                    
+                
                 return bool;
             };
             
@@ -877,7 +875,7 @@ var Moovie = function (videos, options) {
                     initialStep: 0,
                     offset: -this.controls.progress.knob.getStyle('left').toInt(),
                     onChange: function (step) {
-                        video.currentTime = video.duration * step / this.steps;
+                        video.currentTime = (video.duration * step / this.steps).floor();
                         if (video.paused) { video.play(); }
                     }
                 }
@@ -896,6 +894,256 @@ var Moovie = function (videos, options) {
                 }
             );
             
+            this.bound = {
+                player: {
+                    mouseenter: function (e) {
+                        this.controls.fade('in');
+                    }.bind(this),
+                    
+                    mouseleave: function (e) {
+                        if (this.options.autohideControls) {
+                            this.controls.fade('out');
+                        }
+                    }.bind(this)
+                },
+                
+                overlay: {
+                    firstTimePlay: function (e) {
+                        this.video.play();
+                        this.title.show();
+                    }.bind(this),
+                    
+                    playVideo: this.video.play.bind(this.video)
+                },
+                
+                panels: {
+                    settings: function (e) {
+                        var parent = e.target.getParent();
+                        var checked = (parent.get('data-checked') === 'false' ? 'true' : 'false');
+                        var control = parent.get('data-control');
+                        
+                        parent.set('data-checked', checked);
+                        switch (control) {
+                            case 'autohideControls':
+                                this.options.autohideControls = (checked === 'true');
+                                break;
+                                
+                            case 'loop':
+                                this.video.loop = (checked === 'true');
+                                break;
+                                
+                            case 'captions':
+                                this.options.captions = (checked === 'true');
+                                break;
+                                
+                            case 'debug':
+                                this.debug[(checked === 'true' ? 'enable' : 'disable')]();
+                                break;
+                        }
+                        
+                        this.panels.update('none');
+                    }.bind(this)
+                },
+                
+                playlist: {
+                    select: function (e) {
+                        this.playlist.select(e.target.getParents('li')[0].get('data-index'));
+                    }.bind(this)
+                },
+                
+                controls: {
+                    play: this.togglePlayback.bind(this),
+                    stop: this.video.stop.bind(this.video),
+                    previous: this.playlist.previous.bind(this.playlist),
+                    next: this.playlist.next.bind(this.playlist),
+                    
+                    seekbar: {
+                        track: {
+                            mousemove: function (e) {
+                                if ( ! e.target.hasClass('knob')) {
+                                    var offsetPx = e.page.x - this.getPosition().x;
+                                    var offsetPc = offsetPx / this.bar.getSize().x * 100;
+                                    
+                                    this.time.setTime(video.duration / 100 * offsetPc, offsetPx);
+                                }
+                            },
+                            
+                            mouseleave: function (e) { this.time.fade('hide'); }
+                        },
+                        
+                        knob: {
+                            mouseenter: function (e) {
+                                var parent = this.getParent('.progress');
+                                var knobX = -parent.slider.options.offset;
+                                var barX = parent.bar.getPosition().x;
+                                var offset = this.getPosition().x - barX - knobX;
+                                
+                                parent.time.setTime(video.currentTime, offset);
+                            },
+                            
+                            mouseleave: function (e) {
+                                this.getParent('.progress').time.fade('hide');
+                            }
+                        }
+                    },
+                    
+                    mute: function (e) { this.video.muted = !this.video.muted; }.bind(this),
+                    
+                    volume: {
+                        mouseenter: function (e) { this.popup.fade('in'); },
+                        mouseleave: function (e) { this.popup.fade('out'); }
+                    },
+                    
+                    settings: function (e) {
+                        if (e.target.hasClass('settings')) {
+                            this.panels.update('settings');
+                        }
+                    }.bind(this),
+                    
+                    more: {
+                        click: function (e) {
+                            if (e.target.hasClass('playlist')) {
+                                this.panels.update('playlist');
+                            } else if (e.target.hasClass('about')) {
+                                this.panels.update('about');
+                            } else if (e.target.hasClass('info')) {
+                                this.panels.update('info');
+                            }
+                        }.bind(this),
+                        
+                        mouseenter: function (e) { this.popup.fade('in'); },
+                        mouseleave: function (e) { this.popup.fade('out'); }
+                    },
+                    
+                    fullscreen: this.toggleFullscreen.bind(this)
+                },
+                
+                video: {
+                    click: function (e) {
+                        this.video.pause();
+                        this.overlay.update('paused');
+                    }.bind(this),
+                    
+                    play: function (e) {
+                        this.controls.play.update();
+                        this.overlay.update('none');
+                    }.bind(this),
+                    
+                    pause: function (e) {
+                        this.controls.play.update();
+                        this.overlay.update('paused');
+                    }.bind(this),
+                    
+                    ended: function (e) {
+                        if (this.playlist.hasNext()) {
+                            this.playlist.next();
+                        } else {
+                            this.controls.play.update();
+                            this.overlay.update('replay');
+                        }
+                    }.bind(this),
+                    
+                    progress: function (e) {
+                        var vb = this.video.buffered, pct = 0;
+                        
+                        // new way
+                        if (vb && vb.length) {
+                            var buffer = (vb.end(0) - vb.start(0)).toInt();
+                            pct = (buffer * 100) / this.video.duration.toInt();
+                        
+                        // old way
+                        } else if (e.event.lengthComputable) {
+                            pct = e.event.loaded / e.event.total * 100;
+                        }
+                        
+                        this.controls.progress.buffered.setStyle('width', pct + '%');
+                    }.bind(this),
+                    
+                    seeking: function (e) { this.overlay.update('buffering'); }.bind(this),
+                    
+                    seeked: function (e) {
+                        this.overlay.update('none');
+                        
+                        if ( ! this.video.paused) {
+                            this.controls.play.update();
+                        }
+                    }.bind(this),
+                    
+                    timeupdate: function (e) {
+                        var duration = this.video.duration;
+                        var currentTime = this.video.currentTime;
+                        var slider = this.controls.progress.slider;
+                        
+                        this.controls.currentTime.update(currentTime);
+                        
+                        // update seekbar ".knob" knob
+                        if ( ! slider.isDragging) {
+                            var position = currentTime / duration * slider.range;
+                            position = slider.toPosition(position);
+                            slider.knob.setStyle(slider.property, position);
+                        }
+                        
+                        // update seekbar ".played" bar
+                        var pct = (currentTime / duration) * 100;
+                        this.controls.progress.played.setStyle('width', pct + '%');
+
+                        // Captions
+                        var found = false;
+                        var track = this.video.getFirst('track');
+                        
+                        if (track && track.cues && this.options.captions) {
+                            track.cues.each(function (cue) {
+                                if (currentTime >= cue.start && currentTime <= cue.end) {
+                                    this.captions.caption.set('html', cue.text);
+                                    this.captions.show();
+                                    found = true;
+                                }
+                            }, this);
+                        }
+
+                        if ( ! found) {
+                            this.captions.caption.set('html', '');
+                            this.captions.hide();
+                        }
+                    }.bind(this),
+                    
+                    durationchange: function (e) {
+                        this.controls.duration.update(this.video.duration);
+                    }.bind(this),
+                    
+                    volumechange: function (e) {
+                        var mutedChanged = muted !== this.video.muted ? true : false;
+                        muted = this.video.muted;
+
+                        if (mutedChanged && !this.video.muted && this.video.volume === 0) {
+                            // Un-muted with volume at 0 -- pick a sane default. This is probably the only deviation from the way the YouTube flash player handles volume control.
+                            this.video.volume = 0.5;
+                        } else if (this.video.muted && this.video.volume !== 0 && !mutedChanged) {
+                            // IF volume changed while muted, THEN un-mute
+                            this.video.muted = false;
+                        } else if (!mutedChanged && !this.video.muted && this.video.volume === 0) {
+                            // IF slider dragged to 0, THEN mute
+                            this.video.muted = true;
+                        }
+
+                        if (this.video.muted) {
+                            this.controls.volume.mute.addClass('muted');
+                        } else {
+                            this.controls.volume.mute.removeClass('muted');
+                        }
+                        
+                        if ( ! this.controls.volume.slider.isDragging) {
+                            var knob = this.controls.volume.knob;
+                            // If muted, assume 0 for volume to visualize the muted state in the slider as well. Don't actually change the volume, though, so when un-muted, the slider simply goes back to its former value.
+                            var volume = this.video.muted && mutedChanged ? 0 : this.video.volume;
+                            var barSize = this.controls.volume.bar.getSize().y;
+                            var offset = barSize - volume * barSize;
+                            knob.setStyle('top', offset + -this.controls.volume.slider.options.offset);
+                        }
+                    }.bind(this)
+                }
+            };
+            
             this.attach();
             
             if ( ! video.autoplay) {
@@ -912,278 +1160,79 @@ var Moovie = function (videos, options) {
         },
         
         /**
-         * Adds all the required event listeners to the player.
+         * Adds the event listeners used by Moovie.
          * 
          * @this {Doit}
          * @return {Doit} The instance on which this method was called.
          */
         attach: function () {
-            var self = this, video = this.video;
-            var muted = this._muted;
+            var bound = this.bound;
             
-            this.player.addEvents({
-                mouseenter: function (e) {
-                    self.controls.fade('in');
-                },
-                
-                mouseleave: function (e) {
-                    if (self.options.autohideControls) {
-                        self.controls.fade('out');
-                    }
-                }
-            });
-            
-            $$(this.overlay.play, this.overlay.replay).addEvent('click', function (e) {
-                video.play();
-                self.title.show();
-            });
-            
-            this.overlay.paused.addEvent('click', this.video.play.bind(this.video));
-            
-            this.panels.addEvent('click:relay(.checkbox-widget)', function (e) {
-                if (this.get('data-checked') === 'false') {
-                    this.set('data-checked', 'true');
-                } else {
-                    this.set('data-checked', 'false');
-                }
-                
-                var control = this.get('data-control');
-                var checked = this.get('data-checked');
-                
-                switch (control) {
-                    case 'autohideControls':
-                        self.options.autohideControls = (checked === 'true');
-                        break;
-                        
-                    case 'loop':
-                        video.loop = checked === 'true';
-                        break;
-                        
-                    case 'captions':
-                        self.options.captions = checked === 'true';
-                        break;
-                        
-                    case 'debug':
-                        if (checked === 'true') {
-                            self.debug.enable();
-                        } else {
-                            self.debug.disable();
-                        }
-                        break;
-                }
-                
-                self.panels.update('none');
-            });
-            
-            this.playlist.addEvent('click:relay(.label)', function (e) {
-                e.stop();
-
-                var index = this.getParents('li')[0].get('data-index');
-                self.playlist.select(index);
-            });
-            
-            this.controls.play.addEvent('click', this.togglePlayback.bind(this));
-            this.controls.stop.addEvent('click', this.video.stop.bind(this.video));
+            this.player.addEvents(bound.player);
+            this.overlay.play.addEvent('click', bound.overlay.firstTimePlay);
+            this.overlay.replay.addEvent('click', bound.overlay.firstTimePlay);
+            this.overlay.paused.addEvent('click', bound.overlay.playVideo);
+            this.panels.settings.addEvent('click:relay(.checkbox-widget)', bound.panels.settings);
+            this.playlist.addEvent('click:relay(.label)', bound.playlist.select);
+            this.controls.play.addEvent('click', bound.controls.play);
+            this.controls.stop.addEvent('click', bound.controls.stop);
             
             if (this.playlist.length > 1) {
-                this.controls.previous.addEvent('click', this.playlist.previous.bind(this.playlist));
-                this.controls.next.addEvent('click', this.playlist.next.bind(this.playlist));
+               this.controls.previous.addEvent('click', bound.controls.previous);
+               this.controls.next.addEvent('click', bound.controls.next);
             }
             
-            // display time tooltip when hovering over track
-            this.controls.progress.addEvents({
-                mousemove: function (e) {
-                    if ( ! e.target.hasClass('knob')) {
-                        var offsetPx = e.page.x - this.getPosition().x;
-                        var offsetPc = offsetPx / this.bar.getSize().x * 100;
-                        var value = (video.duration || 0) / 100 * offsetPc;
-                        
-                        self.controls.progress.time.setTime(value, offsetPx);
-                    }
-                },
-                
-                mouseleave: function (e) {
-                    this.time.fade('hide');
-                }
-            });
+            this.controls.progress.slider.attach();
+            this.controls.progress.addEvents(bound.controls.seekbar.track);
+            this.controls.progress.knob.addEvents(bound.controls.seekbar.knob);
+            this.controls.volume.slider.attach();
+            this.controls.volume.mute.addEvent('click', bound.controls.mute);
+            this.controls.volume.addEvents(bound.controls.volume);
+            this.controls.settings.addEvent('click', bound.controls.settings);
+            this.controls.more.addEvents(bound.controls.more);
+            this.controls.fullscreen.addEvent('click', bound.controls.fullscreen);
+            this.video.addEvents(bound.video);
+            this.debug.attach();
             
-            // display time tooltip when over knob
-            this.controls.progress.knob.addEvents({
-                mouseenter: function (e) {
-                    var parent = this.getParent('.progress');
-                    var knobX = -parent.slider.options.offset;
-                    var barX = parent.bar.getPosition().x;
-                    var offset = this.getPosition().x - barX - knobX;
-                    
-                    parent.time.setTime(video.currentTime, offset);
-                },
-                
-                mouseleave: function (e) {
-                    this.getParent('.progress').time.fade('hide');
-                }
-            });
+            return this;
+        },
+        
+        /**
+         * Removes the event listeners used by Moovie.
+         * 
+         * @this {Doit}
+         * @return {Doit} The instance on which this method was called.
+         */
+        detach: function () {
+            var bound = this.bound;
             
-            this.controls.volume.mute.addEvent('click', function (e) {
-                video.muted = !video.muted;
-            });
+            this.player.removeEvents(bound.player);
+            this.overlay.play.removeEvent('click', bound.overlay.firstTimePlay);
+            this.overlay.replay.removeEvent('click', bound.overlay.firstTimePlay);
+            this.overlay.paused.removeEvent('click', bound.overlay.playVideo);
+            this.panels.settings.removeEvent('click:relay(.checkbox-widget)', bound.panels.settings);
+            this.playlist.removeEvent('click:relay(.label)', bound.playlist.select);
+            this.controls.play.removeEvent('click', bound.controls.play);
+            this.controls.stop.removeEvent('click', bound.controls.stop);
             
-            this.controls.volume.addEvents({
-                mouseenter: function (e) {
-                    this.popup.fade('in');
-                },
-                
-                mouseleave: function (e) {
-                    this.popup.fade('out');
-                }
-            });
+            if (this.playlist.length > 1) {
+               this.controls.previous.removeEvent('click', bound.controls.previous);
+               this.controls.next.removeEvent('click', bound.controls.next);
+            }
             
-            this.controls.more.addEvents({
-                mouseenter: function (e) {
-                    this.popup.fade('in');
-                },
-                
-                mouseleave: function (e) {
-                    this.popup.fade('out');
-                }
-            });
+            this.controls.progress.slider.detach();
+            this.controls.progress.removeEvents(bound.controls.seekbar.track);
+            this.controls.progress.knob.removeEvents(bound.controls.seekbar.knob);
+            this.controls.volume.slider.detach();
+            this.controls.volume.mute.removeEvent('click', bound.controls.mute);
+            this.controls.volume.removeEvents(bound.controls.volume);
+            this.controls.settings.removeEvent('click', bound.controls.settings);
+            this.controls.more.removeEvents(bound.controls.more);
+            this.controls.fullscreen.removeEvent('click', bound.controls.fullscreen);
+            this.video.removeEvents(bound.video);
+            this.debug.detach();
             
-            $$(this.controls.settings,
-            this.controls.more).addEvent('click', function (e) {
-                if (e.target.hasClass('settings')) {
-                    self.panels.update('settings');
-                } else if (e.target.hasClass('playlist')) {
-                    self.panels.update('playlist');
-                } else if (e.target.hasClass('about')) {
-                    self.panels.update('about');
-                } else if (e.target.hasClass('info')) {
-                    self.panels.update('info');
-                }
-            });
-            
-            this.controls.fullscreen.addEvent('click', this.toggleFullscreen.bind(this));
-            
-            video.addEvents({
-                click: function (e) {
-                    video.pause();
-                    self.overlay.update('paused');
-                },
-
-                play: function (e) {
-                    self.controls.play.update();
-                    self.overlay.update('none');
-                },
-
-                pause: function (e) {
-                    self.controls.play.update();
-                    self.overlay.update('paused');
-                },
-
-                ended: function (e) {
-                    if (self.playlist.length > 1) {
-                        self.playlist.next();
-                    } else {
-                        self.controls.play.update();
-                        self.overlay.update('replay');
-                    }
-                },
-
-                progress: function (e) {
-                    var max = parseInt(video.duration, 10);
-                    var vb = video.buffered;
-                    
-                    if (vb && vb.length) {
-                        var buffer = parseInt(vb.end(0) - vb.start(0), 10);
-                        var pct = (buffer * 100) / max;
-                        self.controls.progress.buffered.setStyle('width', pct + '%');
-                    }
-                },
-
-                seeking: function (e) {
-                    self.overlay.update('buffering');
-                },
-
-                seeked: function (e) {
-                    self.overlay.update('none');
-                    
-                    if ( ! video.paused) {
-                        self.controls.play.update();
-                    }
-                },
-
-                timeupdate: function (e) {
-                    self.controls.currentTime.update(video.currentTime);
-                    
-                    // update seekbar ".knob" knob
-                    var slider = self.controls.progress.slider;
-                    if ( ! slider.isDragging) {
-                        var position = video.currentTime / video.duration * slider.range;
-                        position = slider.toPosition(position);
-                        slider.knob.setStyle(slider.property, position);
-                    }
-                    
-                    // update seekbar ".played" bar
-                    var duration = video.duration;
-                    if (duration > 0) {
-                        var pct = (video.currentTime / duration) * 100;
-                        self.controls.progress.played.setStyle('width', pct + '%');
-                    }
-
-                    // Captions
-                    var found = false;
-                    var track = self.video.getFirst('track');
-                    
-                    if (track && track.cues && self.options.captions) {
-                        track.cues.each(function (cue) {
-                            if (self.video.currentTime >= cue.start &&
-                                self.video.currentTime <= cue.end) {
-                                self.captions.caption.set('html', cue.text);
-                                self.captions.show();
-                                found = true;
-                            }
-                        });
-                    }
-
-                    if ( ! found) {
-                        self.captions.caption.set('html', '');
-                        self.captions.hide();
-                    }
-                },
-
-                durationchange: function (e) {
-                    self.controls.duration.update(video.duration);
-                },
-
-                volumechange: function (e) {
-                    var mutedChanged = muted !== video.muted ? true : false;
-                    muted = video.muted;
-
-                    if (mutedChanged && !video.muted && video.volume === 0) {
-                        // Un-muted with volume at 0 -- pick a sane default. This is probably the only deviation from the way the YouTube flash player handles volume control.
-                        video.volume = 0.5;
-                    } else if (video.muted && video.volume !== 0 && !mutedChanged) {
-                        // IF volume changed while muted, THEN un-mute
-                        video.muted = false;
-                    } else if (!mutedChanged && !video.muted && video.volume === 0) {
-                        // IF slider dragged to 0, THEN mute
-                        video.muted = true;
-                    }
-
-                    if (video.muted) {
-                        self.controls.volume.mute.addClass('muted');
-                    } else {
-                        self.controls.volume.mute.removeClass('muted');
-                    }
-                    
-                    if ( ! self.controls.volume.slider.isDragging) {
-                        var knob = self.controls.volume.knob;
-                        // If muted, assume 0 for volume to visualize the muted state in the slider as well. Don't actually change the volume, though, so when un-muted, the slider simply goes back to its former value.
-                        var volume = video.muted && mutedChanged ? 0 : video.volume;
-                        var barSize = self.controls.volume.bar.getSize().y;
-                        var offset = barSize - volume * barSize;
-                        knob.setStyle('top', offset + -self.controls.volume.slider.options.offset);
-                    }
-                }
-            });
+            return this;
         },
         
         /**
