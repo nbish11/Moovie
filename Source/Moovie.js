@@ -436,6 +436,31 @@ var Moovie = function (videos, options) {
             var self = this, video = this.video;
             var playlist = new Element('div.playlist');
             
+            var getExtension = function (f) {
+                return (/[.]/.exec(f)) ? /[^.]+$/.exec(f) : undefined;
+            };
+            
+            // https://github.com/Modernizr/Modernizr/blob/master/feature-detects/video.js
+            var getSupport = function video() {
+                var elem = document.createElement('video');
+                var bool = false;
+                
+                try {
+                    if (bool = !!elem.canPlayType) {
+                        bool = Boolean(bool);
+                        bool.ogg = elem.canPlayType('video/ogg; codecs="theora"').replace(/^no$/, '');
+                        bool.h264 = elem.canPlayType('video/mp4; codecs="avc1.42E01E"').replace(/^no$/, '');
+                        bool.webm = elem.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/^no$/, '');
+                        bool.vp9 = elem.canPlayType('video/webm; codecs="vp9"').replace(/^no$/, '');
+                        bool.hls = elem.canPlayType('application/x-mpegURL; codecs="avc1.42E01E"').replace(/^no$/, '');
+                        bool.mp4 = bool.h264;
+                        bool.ogv = bool.ogg;
+                    }
+                } catch (e) {}
+                    
+                return bool;
+            };
+            
             playlist.index = 0;
             playlist.collection = [];
             playlist.length = 0;
@@ -486,7 +511,20 @@ var Moovie = function (videos, options) {
                     this.getElement('ol.playlist li[data-index="' + this.index + '"]').addClass('active');
                     
                     // set "src" attribute
-                    video.src = current.src;
+                    if (current.src) {
+                        video.src = current.src;
+                    } else if (typeOf(current.sources) === 'array') {
+                        var i = 0, s = getSupport(), l = current.sources.length;
+                        
+                        while (i < l) {
+                            if (s[getExtension(current.sources[i])] === 'probably') {
+                                video.src = current.sources[i];
+                                break;
+                            }
+                            
+                            i++;
+                        }
+                    }
                     
                     // set "poster" attribute
                     if (current.poster) {
