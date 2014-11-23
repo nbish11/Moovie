@@ -69,7 +69,7 @@ Those savages are threatening our whole operation.
 
 18
 00:01:01,127 --> 00:01:05,800
-We\'re on the brink of war and you're supposed to be finding a diplomatic solution.
+We're on the brink of war and you're supposed to be finding a diplomatic solution.
 
 19
 00:01:07,999 --> 00:01:12,000
@@ -189,7 +189,7 @@ Then I guess we'd better stop him.
 
 48
 00:03:04,487 --> 00:03:05,666
-They\'ve sent us a message...
+They've sent us a message...
 
 49
 00:03:06,164 --> 00:03:07,943
