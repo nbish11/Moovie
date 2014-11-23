@@ -973,7 +973,11 @@ var Moovie = function (videos, options) {
                             mouseleave: function (e) {
                                 this.getParent('.progress').time.fade('hide');
                             }
-                        }
+                        },
+                        
+                        played: function (e) {
+                            this.controls.progress.slider.clickedElement(e);
+                        }.bind(this)
                     },
                     
                     mute: function (e) { this.video.muted = !this.video.muted; }.bind(this),
@@ -1173,6 +1177,7 @@ var Moovie = function (videos, options) {
             this.controls.progress.slider.attach();
             this.controls.progress.addEvents(bound.controls.seekbar.track);
             this.controls.progress.knob.addEvents(bound.controls.seekbar.knob);
+            this.controls.progress.played.addEvent('click', bound.controls.seekbar.played);
             this.controls.volume.slider.attach();
             this.controls.volume.mute.addEvent('click', bound.controls.mute);
             this.controls.volume.addEvents(bound.controls.volume);
@@ -1212,6 +1217,7 @@ var Moovie = function (videos, options) {
             this.controls.progress.slider.detach();
             this.controls.progress.removeEvents(bound.controls.seekbar.track);
             this.controls.progress.knob.removeEvents(bound.controls.seekbar.knob);
+            this.controls.progress.played.removeEvent('click', bound.controls.seekbar.played);
             this.controls.volume.slider.detach();
             this.controls.volume.mute.removeEvent('click', bound.controls.mute);
             this.controls.volume.removeEvents(bound.controls.volume);
