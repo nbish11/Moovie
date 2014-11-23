@@ -1,10 +1,6 @@
 /* Moovie base styles */
 .moovie {
-    background: none repeat scroll 0 0 #000000;
-    border: 5px solid #222222;
-    color: #FFFFFF;
-    padding: 30px;
-    position: relative;
+    box-shadow: 0 0 15px #000000;
 }
 
 .moovie p {
