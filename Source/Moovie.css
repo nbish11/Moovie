@@ -1,6 +1,8 @@
 /* Moovie base styles */
 .moovie {
     box-shadow: 0 0 15px #000000;
+    position: relative;
+    color: #ffffff;
 }
 
 .moovie p {
