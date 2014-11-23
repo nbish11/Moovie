@@ -37,7 +37,8 @@ only ever want to provide a single video type.
 
 ## Sources
 The "sources" property can accept an array of 
-strings.
+strings. All sources are checked in the order they
+appear in the array.
 
 **Example:**
 
