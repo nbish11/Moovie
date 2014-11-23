@@ -216,8 +216,6 @@ var Moovie = function (videos, options) {
         }
     });
     
-    var bound = {};
-    
     // The main function, which handles one <video> at a time.
     // <http://www.urbandictionary.com/define.php?term=Doit&defid=3379319>
     var Doit = new Class({
@@ -235,20 +233,11 @@ var Moovie = function (videos, options) {
         },
         
         initialize: function (video, options) {
-            // reference to <video> tag
-            this.video = document.id(video);
-            
-            // set default title in options
-            this.options.title = new URI(this.video.src).get('file');
-            
-            // overide defaults with user provided options
-            this.setOptions(options);
-            
-            // turn off HTML5 native video controls
-            this.video.controls = false;
-            
-            // load tracks
-            this.initTracks();
+            this.video = document.id(video);    // Store reference to <video> tag.
+            this.options.title = new URI(this.video.src).get('file');   // Provide a default title.
+            this.setOptions(options);   // Set options.
+            this.video.controls = false;    // Disable native player's native controls.
+            this.initTracks();  // Add subtitle support.
             
             // Add HTML 5 media events to Element.NativeEvents, if needed.
             if ( ! Element.NativeEvents.timeupdate) {
@@ -1018,6 +1007,7 @@ var Moovie = function (videos, options) {
                     fullscreen: this.toggleFullscreen.bind(this)
                 },
                 
+                // @todo: loadstart, durationchange, loadedmetadata, loadeddata, progress, canplay, canplaythrough
                 video: {
                     click: function (e) {
                         this.video.pause();
@@ -1041,22 +1031,6 @@ var Moovie = function (videos, options) {
                             this.controls.play.update();
                             this.overlay.update('replay');
                         }
-                    }.bind(this),
-                    
-                    progress: function (e) {
-                        var vb = this.video.buffered, pct = 0;
-                        
-                        // new way
-                        if (vb && vb.length) {
-                            var buffer = (vb.end(0) - vb.start(0)).toInt();
-                            pct = (buffer * 100) / this.video.duration.toInt();
-                        
-                        // old way
-                        } else if (e.event.lengthComputable) {
-                            pct = e.event.loaded / e.event.total * 100;
-                        }
-                        
-                        this.controls.progress.buffered.setStyle('width', pct + '%');
                     }.bind(this),
                     
                     seeking: function (e) { this.overlay.update('buffering'); }.bind(this),
@@ -1141,7 +1115,21 @@ var Moovie = function (videos, options) {
                             knob.setStyle('top', offset + -this.controls.volume.slider.options.offset);
                         }
                     }.bind(this)
-                }
+                },
+                
+                // Track video progress ourselves. This is still affected 
+                // by the attach() and detach() methods.
+                videoProgress: function () {
+                    var b = this.video.buffered, l = b.length;
+                    
+                    while (l--) {
+                        var buffer = (b.end(l) - b.start(l)).toInt();
+                        var pct = (buffer * 100) / this.video.duration.toInt();
+                        this.controls.progress.buffered.setStyle('width', pct + '%');
+                    }
+                    
+                    this.bound.videoProgress.id = setTimeout(this.bound.videoProgress, 29);
+                }.bind(this)
             };
             
             this.attach();
@@ -1193,6 +1181,7 @@ var Moovie = function (videos, options) {
             this.controls.fullscreen.addEvent('click', bound.controls.fullscreen);
             this.video.addEvents(bound.video);
             this.debug.attach();
+            bound.videoProgress();  // Start polling the "buffered" attribute.
             
             return this;
         },
@@ -1231,6 +1220,7 @@ var Moovie = function (videos, options) {
             this.controls.fullscreen.removeEvent('click', bound.controls.fullscreen);
             this.video.removeEvents(bound.video);
             this.debug.detach();
+            clearTimeout(bound.videoProgress.id);   // Disable polling of the "buffered" attribute.
             
             return this;
         },
