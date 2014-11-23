@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Moovie's Demo Page</title>
+        
+        <!-- Moovie styles -->
+        <link rel="stylesheet" type="text/css" href="Source/Moovie.css">
+        
+        <!-- MooTools library -->
+        <script type="text/javascript" src="Lib/mootools-1.5.1/mootools-core-min-full-nocompat.js"></script>
+        <script type="text/javascript" src="Lib/mootools-1.5.1/mootools-more-min-full-nocompat-nolang.js"></script>
+        
+        <!-- Moovie library -->
+        <script type="text/javascript" src="Source/Moovie.js"></script>
+        
+        <style>
+            body {
+                background-image: url("chrome://global/skin/media/imagedoc-darknoise.png");
+            }
+            
+            .moovie {
+                left: 50%;
+                position: absolute;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: 852px;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <video poster="http://colinaarts.com/assets/avatar.png" src="http://colinaarts.com/assets/avatar.ogv">
+            <track src="http://localhost/moovie/Avatar.srt" srclang="en" kind="moovie" label="English">
+            <p>Your browser does not support the HTML 5 video element.</p>
+        </video>
+        
+        <script>
+            window.addEvent('domready', function () {
+                var video = {
+                    video: $$('video')[0],
+                    id: 'avatar',   // id for the playlist item only
+                    options: {
+                        debug: true,
+                        playlist: 'http://localhost/Moovie/playlist.json'
+                    }
+                };
+                
+                Moovie([video]);
+            });
+        </script>
+    </body>
+</html>
