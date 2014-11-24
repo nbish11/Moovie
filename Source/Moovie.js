@@ -273,48 +273,46 @@ var Moovie = function (videos, options) {
         },
         
         initTracks: function () {
-            var parse = function (data) {
-                var cues = [];
-                var toSeconds = function (t) {
-                    t = t.split(/[:,]/);
-                    
-                    return t[0].toInt() * 3600 +
-                           t[1].toInt() * 60 +
-                           t[2].toInt() +
-                           t[3].toInt() / 1000;
-                };
+            var parse = function (timecode) {
+                var tc = timecode.split(/[:,]/);
+                var hh = (tc[0] * 3600).toInt();
+                var mm = (tc[1] * 60).toInt();
+                var ss = (tc[2]).toInt();
+                var ms = (tc[3] / 1000).toInt();
                 
-                // Two newlines ("\n\n") in a row is considered the cue break.
-                data = data.replace(/\r?\n/gm, '\n').split('\n\n');
-                
-                data.each(function (cue) {
-                    cue = cue.split('\n');
-                    
-                    var id = cue.shift(),
-                        time = cue.shift().split(/[\t ]*-->[\t ]*/),
-                        
-                        // for if the text contains multiple lines
-                        text = cue.join('<br>');
-                        
-                    cues.push({
-                        id: id,
-                        start: toSeconds(time[0]),
-                        end: toSeconds(time[1]),
-                        text: text
-                    });
-                });
-                
-                return cues;
+                return hh + mm + ss + ms;
             };
             
             this.video.getChildren('track').each(function (track) {
-                if (track.get('src') && track.get('kind') === 'moovie') {
+                var validSubtitles = (track.get('kind') === 'subtitles') && track.get('srclang');
+                var validCaptions = track.get('kind') === 'captions';
+                
+                if (validSubtitles || validCaptions) {
                     var request = new Request({
                         method: 'GET',
                         url: track.get('src'),
                         async: false,
-                        onSuccess: function (response) {
-                            track.cues = parse(response);
+                        onSuccess: function (data) {
+                            if (!data) { return; }
+                            track.cues = [];
+                            
+                            // Normalize newline characters and split at each cue.
+                            data = data.replace(/\r?\n/gm, '\n').split('\n\n');
+                            
+                            // create cue list.
+                            data.each(function (cue) {
+                                cue = cue.split('\n');
+                                
+                                var cueid = cue.shift();
+                                var cuetc = cue.shift().split(' --> ');
+                                
+                                track.cues.push({
+                                    id: cueid,
+                                    start: parse(cuetc[0]),
+                                    end: parse(cuetc[1]),
+                                    text: cue.join('<br>')
+                                });
+                            });
                         }
                     }).send();
                 }
