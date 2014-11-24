@@ -523,7 +523,7 @@ var Moovie = function (videos, options) {
                 
                     // add new <track> tags
                     if (current.tracks) {
-                        current.tracks.each(function (track, index) {
+                        current.tracks.each(function (track) {
                             if (typeOf(track) === 'object') {
                                 video.grab(new Element('track', {
                                     src: track.src,
@@ -694,7 +694,7 @@ var Moovie = function (videos, options) {
         },
         
         buildControls: function () {
-            var video = this.video, self = this;
+            var video = this.video;
             
             // formats seconds into HH:MM:SS
             var toTimeString = function (val) {
@@ -782,7 +782,7 @@ var Moovie = function (videos, options) {
             controls.grab(controls.wrapper);
             controls.set('tween', { duration: 150 });
             
-            controls.play.update = function (action) {
+            controls.play.update = function () {
                 if (video.paused || video.ended) {
                     this.removeClass('paused');
                 } else {
@@ -808,10 +808,9 @@ var Moovie = function (videos, options) {
             return this;
         },
         
-        buildPlayer: function (wrapper, container) {
+        buildPlayer: function (wrapper) {
             // references - so I don't have to bind
             var video = this.video,
-                options = this.options,
                 muted = this._muted,
                 self = this;
             
@@ -885,11 +884,11 @@ var Moovie = function (videos, options) {
             
             this.bound = {
                 player: {
-                    mouseenter: function (e) {
+                    mouseenter: function () {
                         this.controls.fade('in');
                     }.bind(this),
                     
-                    mouseleave: function (e) {
+                    mouseleave: function () {
                         if (this.options.autohideControls) {
                             this.controls.fade('out');
                         }
@@ -897,7 +896,7 @@ var Moovie = function (videos, options) {
                 },
                 
                 overlay: {
-                    firstTimePlay: function (e) {
+                    firstTimePlay: function () {
                         this.video.play();
                         this.title.show();
                     }.bind(this),
@@ -957,11 +956,11 @@ var Moovie = function (videos, options) {
                                 }
                             },
                             
-                            mouseleave: function (e) { this.time.fade('hide'); }
+                            mouseleave: function () { this.time.fade('hide'); }
                         },
                         
                         knob: {
-                            mouseenter: function (e) {
+                            mouseenter: function () {
                                 var parent = this.getParent('.progress');
                                 var knobX = -parent.slider.options.offset;
                                 var barX = parent.bar.getPosition().x;
@@ -970,7 +969,7 @@ var Moovie = function (videos, options) {
                                 parent.time.setTime(video.currentTime, offset);
                             },
                             
-                            mouseleave: function (e) {
+                            mouseleave: function () {
                                 this.getParent('.progress').time.fade('hide');
                             }
                         },
@@ -980,11 +979,11 @@ var Moovie = function (videos, options) {
                         }.bind(this)
                     },
                     
-                    mute: function (e) { this.video.muted = !this.video.muted; }.bind(this),
+                    mute: function () { this.video.muted = !this.video.muted; }.bind(this),
                     
                     volume: {
-                        mouseenter: function (e) { this.popup.fade('in'); },
-                        mouseleave: function (e) { this.popup.fade('out'); }
+                        mouseenter: function () { this.popup.fade('in'); },
+                        mouseleave: function () { this.popup.fade('out'); }
                     },
                     
                     settings: function (e) {
@@ -1004,8 +1003,8 @@ var Moovie = function (videos, options) {
                             }
                         }.bind(this),
                         
-                        mouseenter: function (e) { this.popup.fade('in'); },
-                        mouseleave: function (e) { this.popup.fade('out'); }
+                        mouseenter: function () { this.popup.fade('in'); },
+                        mouseleave: function () { this.popup.fade('out'); }
                     },
                     
                     fullscreen: this.toggleFullscreen.bind(this)
@@ -1013,22 +1012,22 @@ var Moovie = function (videos, options) {
                 
                 // @todo: loadstart, durationchange, loadedmetadata, loadeddata, progress, canplay, canplaythrough
                 video: {
-                    click: function (e) {
+                    click: function () {
                         this.video.pause();
                         this.overlay.update('paused');
                     }.bind(this),
                     
-                    play: function (e) {
+                    play: function () {
                         this.controls.play.update();
                         this.overlay.update('none');
                     }.bind(this),
                     
-                    pause: function (e) {
+                    pause: function () {
                         this.controls.play.update();
                         this.overlay.update('paused');
                     }.bind(this),
                     
-                    ended: function (e) {
+                    ended: function () {
                         if (this.playlist.hasNext()) {
                             this.playlist.next();
                         } else {
@@ -1037,9 +1036,9 @@ var Moovie = function (videos, options) {
                         }
                     }.bind(this),
                     
-                    seeking: function (e) { this.overlay.update('buffering'); }.bind(this),
+                    seeking: function () { this.overlay.update('buffering'); }.bind(this),
                     
-                    seeked: function (e) {
+                    seeked: function () {
                         this.overlay.update('none');
                         
                         if ( ! this.video.paused) {
@@ -1047,7 +1046,7 @@ var Moovie = function (videos, options) {
                         }
                     }.bind(this),
                     
-                    timeupdate: function (e) {
+                    timeupdate: function () {
                         var duration = this.video.duration;
                         var currentTime = this.video.currentTime;
                         var slider = this.controls.progress.slider;
@@ -1085,11 +1084,11 @@ var Moovie = function (videos, options) {
                         }
                     }.bind(this),
                     
-                    durationchange: function (e) {
+                    durationchange: function () {
                         this.controls.duration.update(this.video.duration);
                     }.bind(this),
                     
-                    volumechange: function (e) {
+                    volumechange: function () {
                         var mutedChanged = muted !== this.video.muted ? true : false;
                         muted = this.video.muted;
 
