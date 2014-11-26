@@ -839,20 +839,6 @@ var Moovie = function (videos, options) {
             // set video duration
             this.controls.duration.update(video.duration);
             
-            // Fixed height for playlist...
-            (function () {
-                var el      = self.panels.playlist.getChildren('div:nth-child(2)')[0],
-                    height  = 0,
-                    content = el.getChildren().clone();
-                
-                el.empty();
-                height = el.getStyle('height');
-                el.adopt(content);
-                el.getFirst().setStyle('height', height);
-                $$(self.panels.playlist, self.panels.playlist.getChildren()).setStyle('display', 'block');
-                // Holy crap, that is ugly. One day, CSS will actually be able to lay out inferfaces. Or maybe not.
-            })();
-            
             this.controls.progress.slider = new Slider(this.controls.progress.bar,
                 this.controls.progress.knob, {
                     snap: 0,

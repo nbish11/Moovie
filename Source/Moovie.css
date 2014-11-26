@@ -206,10 +206,6 @@
     background: url("http://colinaarts.com/assets/code/moovie/moovie.png") no-repeat scroll right bottom rgba(0, 0, 0, 0);
 }
 
-.moovie .panels .playlist > div {
-    display: table-row;
-}
-
 .moovie .panels .playlist > div + div {
     height: 100%;
 }
