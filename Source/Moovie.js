@@ -21,6 +21,8 @@ provides: [Element.moovie]
 */
 
 var Moovie = function (videos, options) {
+    'use strict';
+    
     var Debug = new Class({
         properties: [
             'autoplay',
