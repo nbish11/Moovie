@@ -1,6 +1,13 @@
 language: "node_js"
+
 node_js:
     - "0.10"
     - "0.11"
+
 before_script:
-    - "npm install -g grunt-cli"
+    - "npm install -g grunt-cli karma-cli"
+
+env:
+    global:
+        - secure: Nls/WM59BDZdnUAboeKclcDIBGjjlNlfTvvUxA+Z4UEvSO5OEuU5NjsipPBu5yMmDdGG+8lEAVGhcP81vm8s5p5Y6gK6BFJEfk9ERuQUuLIBaOw1fmPmdWSnpxv3tkDuqc/+4gjM6QVLXep9VhM9vA0aFxFIXGYVx1Uvt93mG4M=
+        - secure: PDB4f5yEZGkt1NioCGeL4Bn0ovaFo32nOGKV7JiZvu3VJiOlwB5x62eWsn/Tx/+hcAPuqabZZMlAcWCQI8neNC7O1xj2ovh6TGHbSTRVkRXkNuLfiH8YhjdHweABioo+KHsHXsrBgQDpKgMqqpsT1kuCrDWnqd1OFAnKEpuPxvA=

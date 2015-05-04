@@ -13,14 +13,6 @@
     "multistr": true,
     "browser": true,
     "mootools": true,
-    "globals": {
-        "it": false,
-        "xit": false,
-        "describe": false,
-        "xdescribe": false,
-        "beforeEach": false,
-        "afterEach": false,
-        "expect": false,
-        "spyOn": false
-    }
+    "jasmine": true,
+    "strict": true
 }
