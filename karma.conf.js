@@ -32,7 +32,7 @@ module.exports = function (config) {
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-        reporters: ['mocha'],
+        reporters: ['mocha', 'saucelabs'],
 
         // web server port
         port: 9876,
@@ -67,11 +67,16 @@ module.exports = function (config) {
         },
 
         customLaunchers: {
+            windows_firefox: {
+                base 'SauceLabs',
+                browserName: 'firefox',
+                platform: 'Windows 7'
+            },
             chrome_linux: {
                 base: 'SauceLabs',
                 browserName: 'chrome',
-                platform: 'linux'
-            },
+                platform: 'Linux'
+            }
         }
     });
 };
