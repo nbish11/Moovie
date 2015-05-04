@@ -2,7 +2,7 @@
 ---
 description: An advanced HTML5 video player for MooTools.
 
-version: 0.8.2
+version: 1.0.0
 
 license: MIT-style
 

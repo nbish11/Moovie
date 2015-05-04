@@ -1,6 +1,6 @@
 {
     "name": "Moovie",
-    "version": "0.5.2",
+    "version": "1.0.0",
     "description": "An advanced HTML5 video player for MooTools.",
     "main": "grunfile.js",
     "scripts": {

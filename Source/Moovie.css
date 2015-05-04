@@ -1,3 +1,11 @@
+/**
+ * Moovie - 1.0.0
+ * An advanced HTML5 video player for MooTools.
+ * 
+ * Copyright (c) 2010 Colin Aarts <colin@colinaarts.com>
+ * MIT-Style license.
+ */
+
 /* Moovie base styles */
 .moovie {
     box-shadow: 0 0 15px #000000;
