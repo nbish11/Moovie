@@ -168,7 +168,7 @@
     background: none repeat scroll 0 0 rgba(0, 0, 0, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 4px;
-    bottom: 5px;
+    bottom: 33px;   /* controls height: 28px, spacing: 5px */
     font-size: 0.8em;
     left: 5px;
     overflow: hidden;
@@ -180,7 +180,7 @@
 
 .moovie .panels > div {
     display: table;
-    height: 100%;
+    height: auto;
     width: 100%;
 }
 
