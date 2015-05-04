@@ -10,13 +10,15 @@ module.exports = function (config) {
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-        frameworks: ['jasmine'],
+        frameworks: ['jasmine', 'sinon'],
 
         // list of files / patterns to load in the browser
         files: [
             'Lib/mootools-1.5.1/mootools-core-min-full-nocompat.js',
             'Lib/mootools-1.5.1/mootools-more-min-full-nocompat-nolang.js',
+            'Lib/screenfull/dist/screenfull.js',
             'Source/*.js',
+            'Specs/matchers.js',
             'Specs/*.js'
         ],
 
@@ -68,7 +70,7 @@ module.exports = function (config) {
 
         customLaunchers: {
             windows_firefox: {
-                base 'SauceLabs',
+                base: 'SauceLabs',
                 browserName: 'firefox',
                 platform: 'Windows 7'
             },

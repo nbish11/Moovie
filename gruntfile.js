@@ -27,11 +27,13 @@ module.exports = function (grunt) {
         },
         
         karma: {
-            options: {
-                configFile: '<%= jshint.karmafile.src %>'
+            unit: {
+                configFile: '<%= jshint.karmafile.src %>',
+                background: true
             },
             
-            unit: {
+            ci: {
+                configFile: '<%= jshint.karmafile.src %>',
                 browsers: ['windows_firefox', 'chrome_linux'],
                 singleRun: true
             }
@@ -50,14 +52,14 @@ module.exports = function (grunt) {
             
             all: {
                 files: '<%= jshint.all.src %>',
-                tasks: ['jshint:all', 'karma']
+                tasks: ['jshint:all', 'karma:unit:run']
             }
         }
     });
     
     require('load-grunt-tasks')(grunt);
     
-    grunt.registerTask('monitor', ['watch']);
-    grunt.registerTask('test', ['jshint', 'karma:unit']);
+    grunt.registerTask('monitor', ['karma:unit:start', 'watch']);
+    grunt.registerTask('test', ['jshint', 'karma:ci']);
     grunt.registerTask('default', ['test']);
 };
