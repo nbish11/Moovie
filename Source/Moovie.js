@@ -1250,11 +1250,13 @@ var Moovie = function (videos, options) {
                 else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
                 else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen(); }
                 else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+                this.controls.fullscreen.removeClass('fullscreened');
             } else {
                 if (this.player.requestFullscreen) { this.player.requestFullscreen(); }
                 else if (this.player.mozRequestFullScreen) { this.player.mozRequestFullScreen(); }
                 else if (this.player.webkitRequestFullScreen) { this.player.webkitRequestFullScreen(); }
                 else if (this.player.msRequestFullscreen) { this.player.msRequestFullscreen(); }
+                this.controls.fullscreen.addClass('fullscreened');
             }
             
             return this;
