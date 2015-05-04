@@ -834,7 +834,7 @@ var Moovie = function (videos, options) {
             wrapper.adopt(this.captions, this.overlay, this.title, this.panels, this.controls);
 
             // Adjust height of panel container to account for controls bar
-            this.panels.setStyle('height', this.panels.getStyle('height').toInt() - this.controls.getStyle('height').toInt());
+            //this.panels.setStyle('height', this.panels.getStyle('height').toInt() - this.controls.getStyle('height').toInt());
             
             // set video duration
             this.controls.duration.update(video.duration);
