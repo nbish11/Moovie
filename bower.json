@@ -1,0 +1,37 @@
+{
+  "name": "Moovie",
+  "version": "1.0.0",
+  "homepage": "http://colinaarts.com/code/moovie",
+  "authors": [
+    "Colin Aarts <colin@colinaarts.com>",
+    "Nathan Bishop <nbish11@hotmail.com"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/nbish11/Moovie.git"
+  },
+  "description": "An advanced HTML5 video player for MooTools.",
+  "main": [
+    "Dist/Moovie.js",
+    "Dist/Moovie.css"
+  ],
+  "keywords": [
+    "video",
+    "html5",
+    "media",
+    "mootools",
+    "player",
+    "captions",
+    "subtitles",
+    "playlist",
+    "debug"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "Specs"
+  ]
+}
