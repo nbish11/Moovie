@@ -239,9 +239,9 @@ provides: [Element.moovie]
     };
     
     Element.implement({
-        toHTMLTrackElement: function (video) {
+        toHTMLTrackElement: function () {
             var element = this;
-            //var video = this.getParent('video');
+            var video = this.getParent('video');
             var readyState = 0;
             var track = new TextTrack(element, video);
             var request = new Request({
@@ -402,24 +402,21 @@ provides: [Element.moovie]
                 this.setOptions(options);   // Set options.
                 this.video.controls = false;    // Disable native player's native controls.
                 
-                var video = this.video.clone(true, true);
-                var instance = this.video.Moovie;
-                
                 // Browser support for textTracks is all over the place so, Moovie 
                 // will disable native textTracks for it's own players. This gives 
                 // us the added benefit of keeping SRT support as well.
-                disableNativeTextTracks(video);
+                disableNativeTextTracks(this.video);
                 
-                this.tracks = video.getChildren('track');
+                this.tracks = this.video.getChildren('track');
                 if (this.tracks.length > 0) {
                     // we need to make sure each track gets 
                     // the cloned video, not the original
-                    this.tracks.toHTMLTrackElement(video);
+                    this.tracks.toHTMLTrackElement(/*video*/);
                 }
                 
                 // check video for a captions track
                 if (!this.options.captions) {
-                    var hasCaptions = !!video.getFirst('track[kind=captions][default]');
+                    var hasCaptions = !!this.video.getFirst('track[kind=captions][default]');
                     this.options.captions = hasCaptions;
                 }
                 
@@ -430,7 +427,7 @@ provides: [Element.moovie]
                 // track. We need to do this in order to be able to provide the advanced 
                 // volume control (a la YouTube's player): changing the volume can have 
                 // an effect on the muted state and vice versa.
-                this._muted = video.muted;
+                this._muted = this.video.muted;
                 
                 // add a stop function to the <video> tag
                 if (!HTMLVideoElement.prototype.stop) {
@@ -442,23 +439,14 @@ provides: [Element.moovie]
                 }
                 
                 // build Moovie
-                this.build(video, instance);
+                this.build();
             },
             
-            build: function (video, instance) {
+            build: function () {
                 // create some wrappers
-                var player = new Element('div.player');
-                var container = new Element('div.moovie').grab(player);
+                var player = new Element('div.player').wraps(this.video);
+                var container = new Element('div.moovie').wraps(player);
                 
-                // it seems cloning the video is the only way to 
-                // ensure native captions show correctly in Firefox.
-                //var video = this.video.clone(true, true);
-                //var instance = this.video.Moovie;
-                container.replaces(this.video);
-                video.inject(player);
-                
-                this.video = video;
-                this.video.Moovie = instance;
                 this._wrapper = this.player = player;        // player
                 this._container = container;    // wraps player and debug
                 
