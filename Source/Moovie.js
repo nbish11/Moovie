@@ -87,6 +87,12 @@ provides: [Element.moovie]
         this.text = text;
     };
     
+    var VTTCue = function VTTCue(startTime, endTime, text) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.text = text;
+    };
+    
     var disableNativeTextTracks = function (video) {
         video = document.id(video);
         
