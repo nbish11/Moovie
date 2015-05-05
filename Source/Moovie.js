@@ -28,6 +28,9 @@ provides: [Element.moovie]
         throw new Error('the screenfull.js library could not be found');
     }
     
+    var hasFullscreenSupport = 'requestFullscreen' in new Element('div');
+    var hasTrackSupport = 'track' in new Element('track');
+    
     Element.implement({
         requestFullscreen: function () {
             screenfull.request(this);
@@ -57,6 +60,324 @@ provides: [Element.moovie]
         this.fireEvent('fullscreenerror', e);
     });
     
+    // Add HTML 5 media events to Element.NativeEvents, if needed.
+    if ( ! Element.NativeEvents.timeupdate) {
+        Object.merge(Element.NativeEvents, {
+            abort: 2, canplay: 2, canplaythrough: 2, durationchange: 2,
+            emptied: 2, ended: 2, loadeddata: 2, loadedmetadata: 2,
+            loadstart: 2, pause: 2, play: 2, playing: 2, progress: 2,
+            ratechange: 2, seeked: 2, seeking: 2, stalled: 2, suspend: 2,
+            timeupdate: 2, volumechange: 2, waiting: 2
+        });
+    }
+    
+    var parseSRTTimecode = function (timecode) {
+        var tc = timecode.split(/[:,]/);
+        var hh = (tc[0]).toInt() * 3600;
+        var mm = (tc[1]).toInt() * 60;
+        var ss = (tc[2]).toInt();
+        var ms = (tc[3]).toFloat() / 1000;
+        
+        return hh + mm + ss + ms;
+    };
+    
+    var SRTCue = function SRTCue(startTime, endTime, text) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.text = text;
+    };
+    
+    var disableNativeTextTracks = function (video) {
+        video = document.id(video);
+        
+        if (hasTrackSupport) {
+            for (var i = 0, l = video.textTracks.length; i < l; i++) {
+                video.textTracks[i].mode = 'disabled';
+            }
+        }
+    };
+    
+    var TextTrack = function TextTrack(element, video) {
+        var activeCues = [];
+        var cues = [];
+        var id = '';
+        var inBandMetadataTrackDispatchType = '';
+        var language = '';
+        var mode = 'disabled';
+        var cueDisplay = new Element('div.cue-display', {
+            styles: {
+                position: 'absolute',
+                left: '0',
+                right: '0',
+                top: '75%',
+                /*top: 290px,*/
+                width: '100%',
+                'text-align': 'center'
+            }
+        });
+        
+        var displayAdded = false;
+        
+        var self = this;
+        var getNewCueElement = function (activeCue) {
+            return new Element('div.cue', {
+                text: activeCue.text,
+                styles: {
+                    color: 'white',
+                    font: 'bold 16px/37px Helvetica, Sans-Serif',
+                    'letter-spacing': '.5px',
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    padding: '5px',
+                    display: 'inline-block'
+                }
+            });
+        };
+        
+        var displayCues = function () {
+            cueDisplay.empty().setStyle('display', '');
+        };
+        
+        var hideCues = function () {
+            cueDisplay.setStyle('display', 'none').empty();
+        };
+        
+        var setActiveCues = function (e) {
+            var found = false;
+            var delay = self.delay || 0.13;
+            var time = e.target.currentTime;
+            
+            if (!displayAdded) {
+                cueDisplay.inject(video, 'after');
+                displayAdded = true;
+            }
+            
+            cues.each(function (cue) {
+                if (cue.startTime <= (time + delay) && cue.endTime >= time) {
+                    found = true;
+                    activeCues.push(cue);
+                    
+                    if (mode === 'showing') {
+                        displayCues();
+                        cueDisplay.grab(getNewCueElement(cue));
+                    }
+                }
+            });
+            
+            if (!found || mode === 'hidden') {
+                hideCues();
+            }
+        };
+        
+        Object.defineProperties(this, {
+            activeCues: {
+                enumerable: true,
+                get: function () {
+                    return activeCues;
+                }
+            },
+            cues: {
+                enumerable: true,
+                get: function () {
+                    return cues;
+                }
+            },
+            id: {
+                enumerable: true,
+                get: function () {
+                    return id;
+                }
+            },
+            inBandMetadataTrackDispatchType: {
+                enumerable: true,
+                get: function () {
+                    return inBandMetadataTrackDispatchType;
+                }
+            },
+            kind: {
+                enumerable: true,
+                get: function () {
+                    return element.kind;
+                }
+            },
+            label: {
+                enumerable: true,
+                get: function () {
+                    return element.label;
+                }
+            },
+            language: {
+                enumerable: true,
+                get: function () {
+                    return language;
+                }
+            },
+            mode: {
+                enumerable: true,
+                get: function () {
+                    return mode;
+                },
+                set: function (value) {
+                    mode = value;
+                    
+                    if (mode === 'disabled') {
+                        video.removeEvent('timeupdate', setActiveCues);
+                        hideCues();
+                    } else if (mode === 'showing' || mode === 'hidden') {
+                        video.addEvent('timeupdate', setActiveCues);
+                    }
+                }
+            }
+        });
+        
+        this.addCue = function addCue(cue) {
+            cues.push(cue);
+        };
+        
+        this.removeCue = function addCue() {
+            
+        };
+    };
+    
+    Element.implement({
+        toHTMLTrackElement: function (video) {
+            var element = this;
+            //var video = this.getParent('video');
+            var readyState = 0;
+            var track = new TextTrack(element, video);
+            var request = new Request({
+                url: element.get('src'),
+                method: 'GET',
+                async: true,
+                onProgress: function () {
+                    readyState = 1;
+                },
+                onSuccess: function (data) {
+                    // Normalize newline characters and split at each cue.
+                    var cues = data.replace(/\r?\n/gm, '\n').split('\n\n');
+                    
+                    cues = cues.map(function (cue) {
+                        cue = cue.split('\n');
+                        
+                        var cueid = cue.shift();
+                        var cuetc = cue.shift().split(' --> ');
+                        var start = parseSRTTimecode(cuetc[0]);
+                        var end = parseSRTTimecode(cuetc[1]);
+                        var text = cue.join('\n');
+                        var ext = element.get('src').split('.').pop();
+                        
+                        if (ext === 'srt') {
+                            return new SRTCue(start, end, text);
+                        } else if (ext === 'vtt') {
+                            return new VTTCue(start, end, text);
+                        }
+                    });
+                    
+                    cues.each(track.addCue);
+                    
+                    if (element.hasAttribute('default')) {
+                        track.mode = 'showing';
+                    }
+                    
+                    readyState = 2;
+                },
+                onError: function () {
+                    readyState = 3;
+                },
+                onFailure: function () {
+                    readyState = 3;
+                }
+            });
+            
+            request.send();
+            
+            Object.defineProperties(element, {
+                kind: {
+                    enumerable: true,
+                    get: function () {
+                        return this.get('kind');
+                    },
+                    set: function (value) {
+                        this.set('kind', value);
+                    }
+                },
+                src: {
+                    enumerable: true,
+                    get: function () {
+                        return this.get('src');
+                    },
+                    set: function (value) {
+                        this.set('src', value);
+                        
+                        // resend request
+                    }
+                },
+                srclang: {
+                    enumerable: true,
+                    get: function () {
+                        return this.get('srclang');
+                    },
+                    set: function (value) {
+                        this.set('srclang', value);
+                    }
+                },
+                label: {
+                    enumerable: true,
+                    get: function () {
+                        return this.get('label');
+                    },
+                    set: function (value) {
+                        this.set('label', value);
+                    }
+                },
+                'default': {
+                    enumerable: true,
+                    get: function () {
+                        return this.hasAttribute('default');
+                    },
+                    set: function (value) {
+                        if (value) {
+                            this.set('default', '');
+                        } else {
+                            this.removeAttribute('default');
+                        }
+                    }
+                },
+                readyState: {
+                    enumerable: true,
+                    get: function () {
+                        return readyState;
+                    }
+                },
+                track: {
+                    enumerable: true,
+                    get: function () {
+                        return track;
+                    }
+                },
+                NONE: {
+                    enumerable: true,
+                    writeable: false,
+                    value: 0
+                },
+                LOADING: {
+                    enumerable: true,
+                    writeable: false,
+                    value: 1
+                },
+                LOADED: {
+                    enumerable: true,
+                    writeable: false,
+                    value: 2
+                },
+                ERROR: {
+                    enumerable: true,
+                    writeable: false,
+                    value: 3
+                }
+            });
+        }
+    });
+    
     var Moovie = function (videos, options) {
         
         // The main function, which handles one <video> at a time.
@@ -80,17 +401,26 @@ provides: [Element.moovie]
                 this.options.title = new URI(this.video.src).get('file');   // Provide a default title.
                 this.setOptions(options);   // Set options.
                 this.video.controls = false;    // Disable native player's native controls.
-                this.initTracks();  // Add subtitle support.
                 
-                // Add HTML 5 media events to Element.NativeEvents, if needed.
-                if ( ! Element.NativeEvents.timeupdate) {
-                    Object.merge(Element.NativeEvents, {
-                        abort: 2, canplay: 2, canplaythrough: 2, durationchange: 2,
-                        emptied: 2, ended: 2, loadeddata: 2, loadedmetadata: 2,
-                        loadstart: 2, pause: 2, play: 2, playing: 2, progress: 2,
-                        ratechange: 2, seeked: 2, seeking: 2, stalled: 2, suspend: 2,
-                        timeupdate: 2, volumechange: 2, waiting: 2
-                    });
+                var video = this.video.clone(true, true);
+                var instance = this.video.Moovie;
+                
+                // Browser support for textTracks is all over the place so, Moovie 
+                // will disable native textTracks for it's own players. This gives 
+                // us the added benefit of keeping SRT support as well.
+                disableNativeTextTracks(video);
+                
+                this.tracks = video.getChildren('track');
+                if (this.tracks.length > 0) {
+                    // we need to make sure each track gets 
+                    // the cloned video, not the original
+                    this.tracks.toHTMLTrackElement(video);
+                }
+                
+                // check video for a captions track
+                if (!this.options.captions) {
+                    var hasCaptions = !!video.getFirst('track[kind=captions][default]');
+                    this.options.captions = hasCaptions;
                 }
                 
                 // Unfortunately, the media API only defines one volume-related event: 
@@ -100,7 +430,7 @@ provides: [Element.moovie]
                 // track. We need to do this in order to be able to provide the advanced 
                 // volume control (a la YouTube's player): changing the volume can have 
                 // an effect on the muted state and vice versa.
-                this._muted = this.video.muted;
+                this._muted = video.muted;
                 
                 // add a stop function to the <video> tag
                 if (!HTMLVideoElement.prototype.stop) {
@@ -112,62 +442,24 @@ provides: [Element.moovie]
                 }
                 
                 // build Moovie
-                this.build();
+                this.build(video, instance);
             },
             
-            initTracks: function () {
-                var parse = function (timecode) {
-                    var tc = timecode.split(/[:,]/);
-                    var hh = (tc[0] * 3600).toInt();
-                    var mm = (tc[1] * 60).toInt();
-                    var ss = (tc[2]).toInt();
-                    var ms = (tc[3] / 1000).toInt();
-                    
-                    return hh + mm + ss + ms;
-                };
-                
-                this.video.getChildren('track').each(function (track) {
-                    var validSubtitles = (track.get('kind') === 'subtitles') && track.get('srclang');
-                    var validCaptions = track.get('kind') === 'captions';
-                    
-                    if (validSubtitles || validCaptions) {
-                        var request = new Request({
-                            method: 'GET',
-                            url: track.get('src'),
-                            async: false,
-                            onSuccess: function (data) {
-                                if (!data) { return; }
-                                track.cues = [];
-                                
-                                // Normalize newline characters and split at each cue.
-                                data = data.replace(/\r?\n/gm, '\n').split('\n\n');
-                                
-                                // create cue list.
-                                data.each(function (cue) {
-                                    cue = cue.split('\n');
-                                    
-                                    var cueid = cue.shift();
-                                    var cuetc = cue.shift().split(' --> ');
-                                    
-                                    track.cues.push({
-                                        id: cueid,
-                                        start: parse(cuetc[0]),
-                                        end: parse(cuetc[1]),
-                                        text: cue.join('<br>')
-                                    });
-                                });
-                            }
-                        }).send();
-                    }
-                });
-            },
-            
-            build: function () {
+            build: function (video, instance) {
                 // create some wrappers
-                var wrapper = new Element('div.player').wraps(this.video),
-                    container = new Element('div.moovie').wraps(wrapper);
-                    
-                this._wrapper = this.player = wrapper;        // player
+                var player = new Element('div.player');
+                var container = new Element('div.moovie').grab(player);
+                
+                // it seems cloning the video is the only way to 
+                // ensure native captions show correctly in Firefox.
+                //var video = this.video.clone(true, true);
+                //var instance = this.video.Moovie;
+                container.replaces(this.video);
+                video.inject(player);
+                
+                this.video = video;
+                this.video.Moovie = instance;
+                this._wrapper = this.player = player;        // player
                 this._container = container;    // wraps player and debug
                 
                 // build debug
@@ -176,16 +468,7 @@ provides: [Element.moovie]
                 if (!this.options.debug) { this.debug.disable(); }
                 
                 // build player
-                this.buildPlayer(wrapper, container);
-            },
-            
-            buildCaptions: function () {
-                this.captions = new Element('div.captions');
-                this.captions.caption = new Element('p');
-                this.captions.grab(this.captions.caption);
-                this.captions.hide();
-                
-                return this;
+                this.buildPlayer(player, container);
             },
             
             buildOverlay: function () {
@@ -495,7 +778,7 @@ provides: [Element.moovie]
                         <dd></dd>\
                     </dl>\
                 ');
-
+                
                 // Content for `settings` panel
                 panels.settings.set('html', '\
                     <div class="heading">Settings</div>\
@@ -655,9 +938,6 @@ provides: [Element.moovie]
                     muted = this._muted,
                     self = this;
                 
-                // build captions
-                this.buildCaptions();
-                
                 //build overlay
                 this.buildOverlay();
                 
@@ -674,10 +954,7 @@ provides: [Element.moovie]
                 this.buildControls();
                 
                 // Inject and do some post-processing --------------------------------------
-                wrapper.adopt(this.captions, this.overlay, this.title, this.panels, this.controls);
-
-                // Adjust height of panel container to account for controls bar
-                //this.panels.setStyle('height', this.panels.getStyle('height').toInt() - this.controls.getStyle('height').toInt());
+                wrapper.adopt(this.overlay, this.title, this.panels, this.controls);
                 
                 // set video duration
                 this.controls.duration.update(video.duration);
@@ -758,7 +1035,8 @@ provides: [Element.moovie]
                                     break;
                                     
                                 case 'captions':
-                                    this.options.captions = (checked === 'true');
+                                    var track = this.video.getFirst('track[kind=captions][default]').track;
+                                    track.mode = checked === 'true' ? 'showing' : 'hidden';
                                     break;
                                     
                                 case 'debug':
@@ -900,25 +1178,6 @@ provides: [Element.moovie]
                             // update seekbar ".played" bar
                             var pct = (currentTime / duration) * 100;
                             this.controls.progress.played.setStyle('width', pct + '%');
-
-                            // Captions
-                            var found = false;
-                            var track = this.video.getFirst('track');
-                            
-                            if (track && track.cues && this.options.captions) {
-                                track.cues.each(function (cue) {
-                                    if (currentTime >= cue.start && currentTime <= cue.end) {
-                                        this.captions.caption.set('html', cue.text);
-                                        this.captions.show();
-                                        found = true;
-                                    }
-                                }, this);
-                            }
-
-                            if ( ! found) {
-                                this.captions.caption.set('html', '');
-                                this.captions.hide();
-                            }
                         }.bind(this),
                         
                         durationchange: function () {
