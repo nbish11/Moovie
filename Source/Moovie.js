@@ -71,27 +71,21 @@ provides: [Element.moovie]
         });
     }
     
-    var parseSRTTimecode = function (timecode) {
-        var tc = timecode.split(/[:,]/);
-        var hh = (tc[0]).toInt() * 3600;
-        var mm = (tc[1]).toInt() * 60;
-        var ss = (tc[2]).toInt();
-        var ms = (tc[3]).toFloat() / 1000;
-        
-        return hh + mm + ss + ms;
-    };
-    
-    var SRTCue = function SRTCue(startTime, endTime, text) {
+    var SRTCue = window.SRTCue || function SRTCue(startTime, endTime, text) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.text = text;
     };
     
-    var VTTCue = function VTTCue(startTime, endTime, text) {
+    window.SRTCue = SRTCue;
+    
+    var VTTCue = window.VTTCue || function VTTCue(startTime, endTime, text) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.text = text;
     };
+    
+    window.VTTCue = VTTCue;
     
     var disableNativeTextTracks = function (video) {
         video = document.id(video);
@@ -250,51 +244,21 @@ provides: [Element.moovie]
             var video = this.getParent('video');
             var readyState = 0;
             var track = new TextTrack(element, video);
-            var request = new Request({
+            var loader = new Moovie.Subtitle.Loader({
                 url: element.get('src'),
-                method: 'GET',
-                async: true,
-                onProgress: function () {
-                    readyState = 1;
-                },
-                onSuccess: function (data) {
-                    // Normalize newline characters and split at each cue.
-                    var cues = data.replace(/\r?\n/gm, '\n').split('\n\n');
+                onSuccess: function (response) {
+                    var ext = this.options.url.split('.').pop();
+                    var parser = new Moovie.Subtitle.Parser(ext);
                     
-                    cues = cues.map(function (cue) {
-                        cue = cue.split('\n');
-                        
-                        var cueid = cue.shift();
-                        var cuetc = cue.shift().split(' --> ');
-                        var start = parseSRTTimecode(cuetc[0]);
-                        var end = parseSRTTimecode(cuetc[1]);
-                        var text = cue.join('\n');
-                        var ext = element.get('src').split('.').pop();
-                        
-                        if (ext === 'srt') {
-                            return new SRTCue(start, end, text);
-                        } else if (ext === 'vtt') {
-                            return new VTTCue(start, end, text);
-                        }
-                    });
-                    
-                    cues.each(track.addCue);
+                    parser.parse(response).each(track.addCue);
                     
                     if (element.hasAttribute('default')) {
                         track.mode = 'showing';
                     }
                     
-                    readyState = 2;
-                },
-                onError: function () {
-                    readyState = 3;
-                },
-                onFailure: function () {
-                    readyState = 3;
+                    this.readyState = 2;
                 }
-            });
-            
-            request.send();
+            }).send();
             
             Object.defineProperties(element, {
                 kind: {
@@ -315,6 +279,16 @@ provides: [Element.moovie]
                         this.set('src', value);
                         
                         // resend request
+                        loader = new Moovie.Subtitle.Loader({
+                            url: value,
+                            onSuccess: function (response) {
+                                var ext = this.options.url.split('.').pop();
+                                var parser = new Moovie.Subtitle.Parser(ext);
+                                
+                                parser.parse(response).each(track.addCue);
+                                this.readyState = 2;
+                            }
+                        }).send();
                     }
                 },
                 srclang: {
@@ -351,7 +325,7 @@ provides: [Element.moovie]
                 readyState: {
                     enumerable: true,
                     get: function () {
-                        return readyState;
+                        return loader.readyState;
                     }
                 },
                 track: {
@@ -1578,6 +1552,155 @@ provides: [Element.moovie]
         
         toElement: function () {
             return this.elements.debug;
+        }
+    });
+    
+    /** @module Subtitle */
+    Moovie.Subtitle = {};
+    
+    Moovie.Subtitle.Loader = new Class({
+        Extends: Request,
+        
+        options: {
+            method: 'GET',
+            async: true,
+            onProgress: function () {
+                this.readyState = 1;
+            },
+            onSuccess: function () {
+                this.readyState = 2;
+            },
+            onFailure: function () {
+                this.readyState = 3;
+            },
+            onError: function () {
+                this.readyState = 3;
+            }
+        },
+        
+        /**
+         * Essentially a glorified wrapper for the Request 
+         * class. It fixes a Request bug, defaults some options 
+         * and adds a readyState property.
+         * 
+         * @constructor
+         * @param {String} The URL to the subtitle file.
+         * @param {Object} Any additional options needed.
+         * @return {this}
+         */
+        initialize: function (options) {
+            this.parent(options);
+            this.readyState = 0;
+            
+            if (!('headers' in options && 'X-Requested-With' in options.headers)) {
+                delete this.headers['X-Requested-With'];
+            }
+        }
+    });
+    
+    /**
+     * Creates and return new instances of 
+     * registered parsers.
+     * 
+     * @constructor
+     * @param {String} The name of the parser
+     * @param {Object} An optional options object to be passed
+     * @return {Class} The parser instance.
+     */
+    Moovie.Subtitle.Parser = (function () {
+        var parsers = {};
+        
+        // private constructor: returns new instances of registered parsers
+        var Parser = new Class(function (type, options) {
+            if (!Parser.supports(type)) {
+                throw new Error('The parser "' + type + '" could not be found');
+            }
+            
+            return new parsers[type](options || {});
+        });
+        
+        /**
+         * Registers a new parser with the class.
+         * 
+         * @static
+         * @param {String}
+         * @param {Object}
+         * @return {void}
+         */
+        Parser.register = function (parserType, parserClass) {
+            if (!('parse' in parserClass)) {
+                throw new Error('Abstract method "parse(raw)" was not implemented');
+            }
+            
+            parsers[parserType] = new Class(parserClass);
+        };
+        
+        /**
+         * Check if a specific parser has been registered.
+         * 
+         * @static
+         * @param {String}
+         * @return {Boolean}
+         */
+        Parser.supports = function (parserType) {
+            return parserType in parsers;
+        };
+        
+        return Parser;
+    })();
+    
+    // Register default parsers
+    Moovie.Subtitle.Parser.register('srt', {
+        /**
+         * Parses a raw string and returns an array of 
+         * objects representing "cues".
+         * 
+         * @param {String}
+         * @return {Array}
+         */
+        parse: function (raw) {
+            raw = raw.replace(/\r\n|\r/gm, '\n').trim().split('\n\n');
+            
+            return raw.map(function (cue) {
+                cue = cue.split('\n');
+                
+                var cueid = cue.shift();
+                var cuetc = cue.shift().split(' --> ');
+                var cuetx = cue.join('\n');
+                
+                return new SRTCue(
+                    this.toSeconds(cuetc[0]),
+                    this.toSeconds(cuetc[1]),
+                    cuetx
+                );
+            }, this);
+        },
+        
+        /**
+         * Formats an SRT timestamp to seconds. E.g. "00:42:11,013"
+         * 
+         * @param {String}
+         * @return {Float}
+         */
+        toSeconds: function (srtTimeStamp) {
+            var parts = srtTimeStamp.split(/[:,]/);
+            
+            return parts[0].toInt() * 3600 +
+                parts[1].toInt() * 60 +
+                parts[2].toInt() +
+                parts[3].toInt() / 1000;
+        }
+    });
+    
+    // In the future this will be a fully fledged WebVTT parser, 
+    // but for now, this is only here to maintain compatibility 
+    // with my previous commits.
+    Moovie.Subtitle.Parser.register('vtt', {
+        parse: function (raw) {
+            var cues = new Moovie.Subtitle.Parser('srt').parse(raw);
+            return cues.map(function (cue) {
+                return new VTTCue(cue.startTime, cue.endTime, cue.text);
+            });
         }
     });
     

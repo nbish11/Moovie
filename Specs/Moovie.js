@@ -15,4 +15,12 @@ describe('Moovie Test Suite', function () {
         expect(Moovie).toBeA('function');
     });
     
+    it('adds an "SRTCue" interface to the window', function () {
+        expect(window.SRTCue).toBeDefined();
+    });
+    
+    it('adds a "VTTCue" interface to the window', function () {
+        expect(window.VTTCue).toBeDefined();
+    });
+    
 });
