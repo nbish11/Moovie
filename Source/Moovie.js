@@ -1353,7 +1353,10 @@ provides: [Element.moovie]
             } else if (typeOf(el) === 'object') {
                 el.options = el.options || {};
                 el.options.id = el.id || null;
-                el.video.Moovie = new Doit(el.video, Object.merge(options, el.options));
+                
+                // options need to be cloned as merging modifies 
+                // the original object (I really, really hate this behaviour).
+                el.video.Moovie = new Doit(el.video, Object.merge(Object.clone(options), el.options));
             }
         });
     };
