@@ -384,20 +384,13 @@ provides: [Element.moovie]
                 
                 // Browser support for textTracks is all over the place so, Moovie 
                 // will disable native textTracks for it's own players. This gives 
-                // us the added benefit of keeping SRT support as well.
+                // us the added benefit of keeping SRT support as well. In addition,
+                // Moovie will at least try to mimic the TextTrack API.
                 disableNativeTextTracks(this.video);
                 
                 this.tracks = this.video.getChildren('track');
                 if (this.tracks.length > 0) {
-                    // we need to make sure each track gets 
-                    // the cloned video, not the original
-                    this.tracks.toHTMLTrackElement(/*video*/);
-                }
-                
-                // check video for a captions track
-                if (!this.options.captions) {
-                    var hasCaptions = !!this.video.getFirst('track[kind=captions][default]');
-                    this.options.captions = hasCaptions;
+                    this.tracks.toHTMLTrackElement();
                 }
                 
                 // Unfortunately, the media API only defines one volume-related event: 
@@ -710,6 +703,11 @@ provides: [Element.moovie]
             },
             
             buildPanels: function () {
+                // States:
+                var hasCaptions = !!this.tracks.getFirst('[kind=captions][default]') || this.options.captions;
+                var loopVideo = !!this.video.loop || this.options.loop;
+                
+                
                 var panels          = new Element('div.panels');
                 panels.info         = new Element('div.info');
                 panels.settings     = new Element('div.settings');
@@ -756,12 +754,12 @@ provides: [Element.moovie]
                         <div class="label">Auto-hide controls</div>\
                     </div>\
                     \
-                    <div class="checkbox-widget" data-control="loop" data-checked="' + (this.video.loop || false) + '">\
+                    <div class="checkbox-widget" data-control="loop" data-checked="' + loopVideo + '">\
                         <div class="checkbox"></div>\
                         <div class="label">Loop video</div>\
                     </div>\
                     \
-                    <div class="checkbox-widget" data-control="captions" data-checked="' + this.options.captions + '">\
+                    <div class="checkbox-widget" data-control="captions" data-checked="' + hasCaptions + '">\
                         <div class="checkbox"></div>\
                         <div class="label">Show captions</div>\
                     </div>\
