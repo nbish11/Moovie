@@ -29,12 +29,13 @@ module.exports = function (config) {
         // preprocess matching files before serving them to the browser
         // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
         preprocessors: {
+            'Source/*.js': ['coverage']
         },
 
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-        reporters: ['mocha', 'saucelabs'],
+        reporters: ['mocha', 'coverage', 'saucelabs'],
 
         // web server port
         port: 9876,
@@ -62,6 +63,11 @@ module.exports = function (config) {
         browserNoActivityTimeout: 4 * 60 * 1000,
         browserDisconnectTimeout: 2000,
         browserDisconnectTolerance: 1,
+        
+        coverageReporter: {
+            type: 'lcov',
+            dir: 'Specs/coverage/'
+        },
         
         // Sauce Labs add-on configuration
         sauceLabs: {

@@ -10,7 +10,14 @@ before_install:
 install:
     - "npm install && bower install"
 
+after_script:
+    - codeclimate < Specs/coverage/**/lcov.info
+
 env:
     global:
         - secure: Nls/WM59BDZdnUAboeKclcDIBGjjlNlfTvvUxA+Z4UEvSO5OEuU5NjsipPBu5yMmDdGG+8lEAVGhcP81vm8s5p5Y6gK6BFJEfk9ERuQUuLIBaOw1fmPmdWSnpxv3tkDuqc/+4gjM6QVLXep9VhM9vA0aFxFIXGYVx1Uvt93mG4M=
         - secure: PDB4f5yEZGkt1NioCGeL4Bn0ovaFo32nOGKV7JiZvu3VJiOlwB5x62eWsn/Tx/+hcAPuqabZZMlAcWCQI8neNC7O1xj2ovh6TGHbSTRVkRXkNuLfiH8YhjdHweABioo+KHsHXsrBgQDpKgMqqpsT1kuCrDWnqd1OFAnKEpuPxvA=
+
+addons:
+    code_climate:
+        - repo_token: 9fdcd7fec46b0b034ecf7383261c03363131ec44dc92612c0bbc874e1c5a5a8e
