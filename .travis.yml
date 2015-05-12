@@ -11,7 +11,7 @@ install:
     - "npm install && bower install"
 
 after_script:
-    - "codeclimate < Specs/coverage/**/lcov.info"
+    - "codeclimate < ./Specs/coverage/**/lcov.info"
 
 env:
     global:
