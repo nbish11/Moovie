@@ -5,13 +5,10 @@ node_js:
     - "0.11"
 
 before_install:
-    - "npm install -g codeclimate-test-reporter"
     - "npm install -g grunt-cli karma-cli bower"
-    
+
 install:
     - "npm install && bower install"
-
-after_script: codeclimate < "./Specs/coverage/**/lcov.info"
 
 env:
     global:
