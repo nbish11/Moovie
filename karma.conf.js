@@ -1,7 +1,7 @@
 module.exports = function (config) {
     'use strict';
     
-    var build = process.env.BUILD;
+    var build = process.env.TRAVIS_BUILD_NUMBER;
     var browser = process.env.BROWSER;
     
     config.set({
@@ -29,12 +29,13 @@ module.exports = function (config) {
         // preprocess matching files before serving them to the browser
         // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
         preprocessors: {
+            'Source/*.js': ['coverage']
         },
 
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-        reporters: ['mocha', 'saucelabs'],
+        reporters: ['mocha', 'saucelabs', 'coverage', 'coveralls'],
 
         // web server port
         port: 9876,
@@ -57,9 +58,13 @@ module.exports = function (config) {
         // if true, Karma captures browsers, runs the tests and exits
         singleRun: false,
         
+        coverageRepoter: {
+            type: 'lcov'
+        },
+        
         // set timeouts needed for Sauce Labs 
-        captureTimeout: 4 * 60 * 1000,
-        browserNoActivityTimeout: 4 * 60 * 1000,
+        captureTimeout: 40000,
+        browserNoActivityTimeout: 40000,
         browserDisconnectTimeout: 2000,
         browserDisconnectTolerance: 1,
         
