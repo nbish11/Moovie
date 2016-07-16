@@ -1,3 +1,6 @@
+# THIS REPOSITORY HAS BEEN DEPRECATED!
+# YOU CAN FIND THE NEW ACTIVELY MAINTAINED REPO [HERE](https://github.com/moovie/moovie)!
+
 Moovie [![Build Status](https://travis-ci.org/nbish11/Moovie.svg)](https://travis-ci.org/nbish11/Moovie) [![Code Climate](https://codeclimate.com/github/nbish11/Moovie/badges/gpa.svg)](https://codeclimate.com/github/nbish11/Moovie) [![Test Coverage](https://codeclimate.com/github/nbish11/Moovie/badges/coverage.svg)](https://codeclimate.com/github/nbish11/Moovie/coverage)
 ======
 This is a custom controls library for the HTML5 video element.
